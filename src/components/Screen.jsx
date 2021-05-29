@@ -16,18 +16,23 @@ class Screen extends React.Component{
         super(props);
 
         this.state = {
-
+            secretWord: null,
+            wordIndices: this.generateIndices(),
         };
     }
 
     render(){
+        console.log(this.state.wordIndices);
+        return (<div>Placeholder.</div>);
+    }
+    
+    generateIndices(){
         let wordIndices = {
             indices: Array(gameParameters.words.length).fill(null),
             count: 0,
         }
         this.generateWordIndices(wordIndices, 0, gameParameters.charArrayLength-gameParameters.wordLength)
-        console.log(wordIndices);
-        return (<div>Placeholder.</div>);
+        return wordIndices.indices;
     }
 
     /* Assumes there is an object wordIdx that contains an array of indices and keeps count of the number indices assigned so far*/
