@@ -23,6 +23,7 @@ class Screen extends React.Component{
 
     render(){
         console.log(this.state.wordIndices);
+        console.log(this.fillCharArray());
         return (<div>Placeholder.</div>);
     }
     
@@ -45,6 +46,29 @@ class Screen extends React.Component{
                 this.generateWordIndices(wordIdx, start, rndIdx - gameParameters.wordLength);
                 this.generateWordIndices(wordIdx, rndIdx + gameParameters.wordLength + 1, end);
             }
+    }
+
+    fillCharArray(){
+        let charArr = Array(gameParameters.charArrayLength).fill(null);
+        // Use indices to fill characters for words ...
+        for(let i = 0; i<gameParameters.words.length; i++){
+            // The index for the ith word is the ith index in this.state.wordIndices
+            let word = gameParameters.words[i];
+            let start = this.state.wordIndices[i];
+            let wordArr = word.split('');
+            for(let j =0; j<gameParameters.wordLength; j++){
+                charArr[start+j] = wordArr[j];
+            }
+        }
+
+        // Fill remaining spaces with random special chars ...
+        for(let i = 0; i<gameParameters.charArrayLength; i++){
+            if(charArr[i] == null){
+                charArr[i] = gameParameters.specialChars[Math.floor(Math.random()*gameParameters.specialChars.length)];
+            }
+        }
+
+        return charArr;
     }
 }
 
