@@ -16,8 +16,9 @@ class Screen extends React.Component{
     constructor(props){
         super(props);
         const indices = this.generateIndices();
+
         this.state = {
-            secretWord: null,
+            secretWord: gameParameters.words[Math.floor(Math.random()*gameParameters.words.length)],
             wordIndices: indices,
             charArray: this.fillCharArray(indices),
         };
@@ -39,11 +40,26 @@ class Screen extends React.Component{
         let isWord = false;
         this.state.wordIndices.forEach((wordIdx, i) =>{
             if(idx >= wordIdx && idx < wordIdx + gameParameters.wordLength){
-                console.log("Clicked: " + gameParameters.words[i]);
+                const word = gameParameters.words[i]
+                const numMatches = this.checkWord(word)
+                console.log("Clicked: " + word + ". Num Matches: " + numMatches);
                 isWord=true;
             }
         })
         if(!isWord) console.log("Clicked:" + this.state.charArray[idx]);
+    }
+
+    checkWord(word){
+        const wordArr = word.split('');
+        console.log(this.state.secretWord);
+        const secretWordArr = this.state.secretWord.split('');
+        
+        let numMatches = 0;
+        secretWordArr.forEach((char, i)=>{
+            if(char === wordArr[i]) numMatches++;
+        });
+
+        return numMatches;
     }
 
     generateIndices(){
