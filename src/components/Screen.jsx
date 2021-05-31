@@ -1,5 +1,5 @@
 import React from 'react';
-
+import Column from './Column.jsx'
 //TODO: Currently hard coding parameters.
 // wordLength will depend on difficulty
 // read specialChars and words from json
@@ -23,9 +23,14 @@ class Screen extends React.Component{
     }
 
     render(){
-        console.log(this.state.wordIndices);
-        console.log(this.state.charArray);
-        return (<div>Placeholder.</div>);
+        const firstHalf = this.state.charArray.slice(0,Math.floor(gameParameters.charArrayLength/2));
+        const secondHalf = this.state.charArray.slice(Math.floor(gameParameters.charArrayLength/2), gameParameters.charArrayLength);
+        return (<div>
+                    <p>Col1</p>
+                    <Column charsSubArray = {firstHalf}></Column>
+                    <p>Col1</p>
+                    <Column charsSubArray = {secondHalf}></Column>
+                </div>);
     }
     
     generateIndices(){
