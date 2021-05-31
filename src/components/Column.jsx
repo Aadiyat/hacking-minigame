@@ -2,6 +2,8 @@
 import React from 'react';
 import Line from './Line.jsx'
 
+import * as gameParameters from './gameParameters.js'
+
 class Column extends React.Component{
 
     render(){
@@ -24,8 +26,7 @@ class Column extends React.Component{
     }
 
     renderLine(lineIdx){
-        const lineLength = 17;
-        const chars = this.props.charsSubArray.slice(lineIdx*lineLength, lineIdx*lineLength + lineLength)
+        const chars = this.props.charsSubArray.slice(lineIdx*gameParameters.lineLength, lineIdx*gameParameters.lineLength + gameParameters.lineLength)
         return (<div><Line lineChars = {chars} onClick= {(charIdx) => this.props.onClick(lineIdx, charIdx)}></Line></div>)
     }
 }

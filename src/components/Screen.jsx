@@ -1,16 +1,7 @@
 import React from 'react';
 import Column from './Column.jsx'
-//TODO: Currently hard coding parameters.
-// wordLength will depend on difficulty
-// read specialChars and words from json
-const gameParameters = {
-    wordLength : 7,
-    wordSpacing: 2, // Minimum spacing between words
-    words: ["dangers", "sending", "central", "hunters", "resides", "believe", "venture", "pattern", "discard", "mention", "cutters", "canteen", "beliefs", "banning", "minigun", "cistern"],
-    specialChars : [',','.','!','@','#','$','%','&','(',')','{','}','[',']','<','>','?','"',"'", '/', '|'],
-    charArrayLength: 408,
-    lineLength: 17,
-}
+
+import * as gameParameters from './gameParameters.js'
 
 class Screen extends React.Component{
     constructor(props){
@@ -51,7 +42,6 @@ class Screen extends React.Component{
 
     checkWord(word){
         const wordArr = word.split('');
-        console.log(this.state.secretWord);
         const secretWordArr = this.state.secretWord.split('');
         
         let numMatches = 0;
