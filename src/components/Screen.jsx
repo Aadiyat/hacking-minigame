@@ -10,43 +10,47 @@ class Screen extends React.Component{
         const indices = this.generateIndices();
 
         this.state = {
-            secretWord: gameParameters.words[Math.floor(Math.random()*gameParameters.words.length)],
-            wordIndices: indices,
-            charArray: this.fillCharArray(indices),
+            password: gameParameters.words[Math.floor(Math.random()*gameParameters.words.length)],
+            wordStartIndices: indices,
+            symbolArray: this.fillSymbolArray(indices),
             results: [],
         };
     }
 
     render(){
-        const firstHalf = this.state.charArray.slice(0,Math.floor(gameParameters.charArrayLength/2));
-        const secondHalf = this.state.charArray.slice(Math.floor(gameParameters.charArrayLength/2), gameParameters.charArrayLength);
+        const firstHalf = this.state.symbolArray.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
+        const secondHalf = this.state.symbolArray.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
         return (<div>
                     <p>Col1</p>
-                    <Column charsSubArray = {firstHalf} onClick = {(lineIdx, charIdx)=>this.handleClick(0, lineIdx, charIdx)}></Column>
+                    <Column symbolSubArray = {firstHalf} onClick = {(lineIdx, charIdx)=>this.handleClick(0, lineIdx, charIdx)}></Column>
                     <p>Col2</p>
-                    <Column charsSubArray = {secondHalf} onClick ={(lineIdx, charIdx)=>this.handleClick(1, lineIdx, charIdx)}></Column>
+                    <Column symbolSubArray = {secondHalf} onClick ={(lineIdx, charIdx)=>this.handleClick(1, lineIdx, charIdx)}></Column>
                     <Output results = {this.state.results}/>
                 </div>);
     }
     
     handleClick(col, line, i){
-        const idx = Math.floor(gameParameters.charArrayLength/2)*col + gameParameters.lineLength*line + i;
+        const idx = Math.floor(gameParameters.symbolArrayLength/2)*col + gameParameters.lineLength*line + i;
         let isWord = false;
-        this.state.wordIndices.forEach((wordIdx, i) =>{
-            if(idx >= wordIdx && idx < wordIdx + gameParameters.wordLength){
+
+        // Check if the selected symbol belongs to a word
+        this.state.wordStartIndices.forEach((wordStart, i) =>{
+            if(idx >= wordStart && idx < wordStart + gameParameters.wordLength){
                 const word = gameParameters.words[i]
                 const numMatches = this.checkWord(word)
                 this.pushResult(word, numMatches);
                 isWord=true;
             }
         })
-        if(!isWord) console.log("Clicked:" + this.state.charArray[idx]);
+        if(!isWord) console.log("Clicked:" + this.state.symbolArray[idx]);
     }
 
-    pushResult(word, numMatches){
+    // TODO: Currently pushing an indefinite number of results
+    // The actual minigame in FO3/4 shows the 3 most recent results
+    pushResult(guess, numMatches){
         const results = this.state.results;
         const result = {
-            word: word,
+            guess: guess,
             numMatches: numMatches
         }
 
@@ -57,41 +61,43 @@ class Screen extends React.Component{
         })
     }
 
-    checkWord(word){
-        const wordArr = word.split('');
-        const secretWordArr = this.state.secretWord.split('');
+    checkWord(guess){
+        const guessArr = guess.split('');
+        const passwordArr = this.state.password.split('');
         
         let numMatches = 0;
-        secretWordArr.forEach((char, i)=>{
-            if(char === wordArr[i]) numMatches++;
+        passwordArr.forEach((char, i)=>{
+            if(char === guessArr[i]) numMatches++;
         });
 
         return numMatches;
     }
 
+    // Generates random indices for an array, ensuring there is room between indices for a word to fit
     generateIndices(){
-        let wordIdx = {
+        let wordStartIdx = {
             indices: Array(gameParameters.words.length).fill(null),
             count: 0,
         }
-        this.generateWordIndices(wordIdx, 0, gameParameters.charArrayLength-gameParameters.wordLength)
-        return this.shuffle(wordIdx.indices);
+        this.generateWordIndices(wordStartIdx, 0, gameParameters.symbolArrayLength-gameParameters.wordLength)
+        return this.shuffle(wordStartIdx.indices);
     }
 
-    /* Assumes there is an object wordIdx that contains an array of indices and keeps count of the number indices assigned so far*/
-    generateWordIndices(wordIdx, start, end){
+    // Assumes there is an object wordIdx that contains an array of indices and keeps count of the number indices assigned so far
+    generateWordIndices(wordStartIdx, start, end){
         if((end - start) >= (gameParameters.wordLength) // If there is room to put in a word
-            && wordIdx.count < gameParameters.words.length) // and if we need to assign another index
+            && wordStartIdx.count < gameParameters.words.length) // and if we need to assign another index
             {
                 let rndIdx = Math.floor(start+Math.random()*(end-start)); // index between start and end (inclusive of start, but not end)
-                wordIdx.indices[wordIdx.count++] = rndIdx;
-                this.generateWordIndices(wordIdx, start, rndIdx - gameParameters.wordLength);
-                this.generateWordIndices(wordIdx, rndIdx + gameParameters.wordLength + 1, end);
+                wordStartIdx.indices[wordStartIdx.count++] = rndIdx;
+                this.generateWordIndices(wordStartIdx, start, rndIdx - gameParameters.wordLength);
+                this.generateWordIndices(wordStartIdx, rndIdx + gameParameters.wordLength + 1, end);
             }
     }
 
-    /* Problem with the generateWordIndices is that the second indice will always be before the first, and
-    the third will be after the first (assuming there is room). Shuffling the indices will make it more randomised */
+    // Recursive nature of generateWordIndices means that the the i+1 index will be before the i th index 
+    // and the i+2 index will be after the first (assuming there is room). 
+    // Shuffling the indices will make it more randomised 
     shuffle(array){
         let current = array.length;
         let temp, randIdx;
@@ -109,14 +115,14 @@ class Screen extends React.Component{
         return array;
     }
 
-    fillCharArray(indices){
-        let charArr = Array(gameParameters.charArrayLength).fill(null);
+    fillSymbolArray(wordStarts){
+        let charArr = Array(gameParameters.symbolArrayLength).fill(null);
         let word, start, wordArr;
-        // Use indices to fill characters for words ...
+        // Use wordStarts to fill characters for words ...
         for(let i = 0; i<gameParameters.words.length; i++){
-            // The index for the ith word is the ith index in indices
+            // The index for the ith word is the ith index in wordStarts
             word = gameParameters.words[i];
-            start = indices[i];
+            start = wordStarts[i];
             wordArr = word.split('');
             for(let j =0; j<gameParameters.wordLength; j++){
                 charArr[start+j] = wordArr[j];
@@ -124,9 +130,9 @@ class Screen extends React.Component{
         }
 
         // Fill remaining spaces with random special chars ...
-        for(let i = 0; i<gameParameters.charArrayLength; i++){
+        for(let i = 0; i<gameParameters.symbolArrayLength; i++){
             if(charArr[i] == null){
-                charArr[i] = gameParameters.specialChars[Math.floor(Math.random()*gameParameters.specialChars.length)];
+                charArr[i] = gameParameters.miscSymbols[Math.floor(Math.random()*gameParameters.miscSymbols.length)];
             }
         }
 

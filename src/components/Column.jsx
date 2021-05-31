@@ -8,6 +8,7 @@ class Column extends React.Component{
 
     render(){
         return (
+            // TODO: render lines in a more programmatic way. This isn't great.
             <div>
                 {this.renderLine(0)}
                 {this.renderLine(1)}
@@ -26,7 +27,7 @@ class Column extends React.Component{
     }
 
     renderLine(lineIdx){
-        const chars = this.props.charsSubArray.slice(lineIdx*gameParameters.lineLength, lineIdx*gameParameters.lineLength + gameParameters.lineLength)
+        const chars = this.props.symbolSubArray.slice(lineIdx*gameParameters.lineLength, lineIdx*gameParameters.lineLength + gameParameters.lineLength)
         return (<div><Line lineChars = {chars} onClick= {(charIdx) => this.props.onClick(lineIdx, charIdx)}></Line></div>)
     }
 }
