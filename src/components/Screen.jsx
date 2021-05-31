@@ -1,5 +1,6 @@
 import React from 'react';
 import Column from './Column.jsx'
+import Output from './Output.jsx';
 
 import * as gameParameters from './gameParameters.js'
 
@@ -12,6 +13,7 @@ class Screen extends React.Component{
             secretWord: gameParameters.words[Math.floor(Math.random()*gameParameters.words.length)],
             wordIndices: indices,
             charArray: this.fillCharArray(indices),
+            results: [],
         };
     }
 
@@ -23,6 +25,7 @@ class Screen extends React.Component{
                     <Column charsSubArray = {firstHalf} onClick = {(lineIdx, charIdx)=>this.handleClick(0, lineIdx, charIdx)}></Column>
                     <p>Col2</p>
                     <Column charsSubArray = {secondHalf} onClick ={(lineIdx, charIdx)=>this.handleClick(1, lineIdx, charIdx)}></Column>
+                    <Output results = {this.state.results}/>
                 </div>);
     }
     
@@ -33,11 +36,25 @@ class Screen extends React.Component{
             if(idx >= wordIdx && idx < wordIdx + gameParameters.wordLength){
                 const word = gameParameters.words[i]
                 const numMatches = this.checkWord(word)
-                console.log("Clicked: " + word + ". Num Matches: " + numMatches);
+                this.pushResult(word, numMatches);
                 isWord=true;
             }
         })
         if(!isWord) console.log("Clicked:" + this.state.charArray[idx]);
+    }
+
+    pushResult(word, numMatches){
+        const results = this.state.results;
+        const result = {
+            word: word,
+            numMatches: numMatches
+        }
+
+        results.push(result);
+
+        this.setState({
+            results: results,
+        })
     }
 
     checkWord(word){
