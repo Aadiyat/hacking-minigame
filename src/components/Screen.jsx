@@ -1,6 +1,7 @@
 import React from 'react';
 import Column from './Column.jsx'
 import Output from './Output.jsx';
+import GameInfo from './GameInfo.jsx';
 
 import * as gameParameters from './gameParameters.js'
 
@@ -14,6 +15,8 @@ class Screen extends React.Component{
             wordStartIndices: indices,
             symbolArray: this.fillSymbolArray(indices),
             results: [],
+            isGameWon: false,
+            tries: 3,
         };
     }
 
@@ -21,6 +24,7 @@ class Screen extends React.Component{
         const firstHalf = this.state.symbolArray.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
         const secondHalf = this.state.symbolArray.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
         return (<div>
+                    <GameInfo tries = {this.state.tries}/>
                     <p>Col1</p>
                     <Column symbolSubArray = {firstHalf} onClick = {(lineIdx, charIdx)=>this.handleClick(0, lineIdx, charIdx)}></Column>
                     <p>Col2</p>
@@ -30,19 +34,38 @@ class Screen extends React.Component{
     }
     
     handleClick(col, line, i){
-        const idx = Math.floor(gameParameters.symbolArrayLength/2)*col + gameParameters.lineLength*line + i;
-        let isWord = false;
+        if(this.state.tries > 0 && !this.state.isGameWon){
+            const idx = Math.floor(gameParameters.symbolArrayLength/2)*col + gameParameters.lineLength*line + i;
+            let isWord = false;
 
-        // Check if the selected symbol belongs to a word
-        this.state.wordStartIndices.forEach((wordStart, i) =>{
-            if(idx >= wordStart && idx < wordStart + gameParameters.wordLength){
-                const word = gameParameters.words[i]
-                const numMatches = this.checkWord(word)
-                this.pushResult(word, numMatches);
-                isWord=true;
-            }
+            // Check if the selected symbol belongs to a word
+            this.state.wordStartIndices.forEach((wordStart, i) =>{
+                if(idx >= wordStart && idx < wordStart + gameParameters.wordLength){
+                    const word = gameParameters.words[i]
+                    const numMatches = this.checkWord(word)
+                    this.pushResult(word, numMatches);
+                    this.checkGameWon(numMatches)
+                    this.decreaseTries();
+                    isWord=true;
+                }
+            })
+            if(!isWord) console.log("Clicked:" + this.state.symbolArray[idx]);
+        }
+    }
+
+    decreaseTries(){
+        const tries = this.state.tries -1;
+        this.setState({
+            tries : tries,
         })
-        if(!isWord) console.log("Clicked:" + this.state.symbolArray[idx]);
+    }
+
+    checkGameWon(numMatches){
+        if(numMatches === gameParameters.wordLength){
+            this.setState({
+                isGameWon:true,
+            })
+        }
     }
 
     // TODO: Currently pushing an indefinite number of results
