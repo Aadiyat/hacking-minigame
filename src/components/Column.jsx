@@ -23,10 +23,10 @@ class Column extends React.Component{
         )
     }
 
-    renderLine(i){
+    renderLine(lineIdx){
         const lineLength = 17;
-        const chars = this.props.charsSubArray.slice(i*lineLength, i*lineLength + lineLength)
-        return (<div><p>Line {i}</p><Line lineChars = {chars}></Line></div>)
+        const chars = this.props.charsSubArray.slice(lineIdx*lineLength, lineIdx*lineLength + lineLength)
+        return (<div><Line lineChars = {chars} onClick= {(charIdx) => this.props.onClick(lineIdx, charIdx)}></Line></div>)
     }
 }
 

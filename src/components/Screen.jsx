@@ -9,6 +9,7 @@ const gameParameters = {
     words: ["dangers", "sending", "central", "hunters", "resides", "believe", "venture", "pattern", "discard", "mention", "cutters", "canteen", "beliefs", "banning", "minigun", "cistern"],
     specialChars : [',','.','!','@','#','$','%','&','(',')','{','}','[',']','<','>','?','"',"'", '/', '|'],
     charArrayLength: 408,
+    lineLength: 17,
 }
 
 class Screen extends React.Component{
@@ -27,12 +28,17 @@ class Screen extends React.Component{
         const secondHalf = this.state.charArray.slice(Math.floor(gameParameters.charArrayLength/2), gameParameters.charArrayLength);
         return (<div>
                     <p>Col1</p>
-                    <Column charsSubArray = {firstHalf}></Column>
-                    <p>Col1</p>
-                    <Column charsSubArray = {secondHalf}></Column>
+                    <Column charsSubArray = {firstHalf} onClick = {(lineIdx, charIdx)=>this.handleClick(0, lineIdx, charIdx)}></Column>
+                    <p>Col2</p>
+                    <Column charsSubArray = {secondHalf} onClick ={(lineIdx, charIdx)=>this.handleClick(1, lineIdx, charIdx)}></Column>
                 </div>);
     }
     
+    handleClick(col, line, i){
+        const idx = Math.floor(gameParameters.charArrayLength/2)*col + gameParameters.lineLength*line + i;
+        console.log("Clicked:" + this.state.charArray[idx]);
+    }
+
     generateIndices(){
         let wordIdx = {
             indices: Array(gameParameters.words.length).fill(null),
