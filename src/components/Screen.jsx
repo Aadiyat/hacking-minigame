@@ -36,7 +36,14 @@ class Screen extends React.Component{
     
     handleClick(col, line, i){
         const idx = Math.floor(gameParameters.charArrayLength/2)*col + gameParameters.lineLength*line + i;
-        console.log("Clicked:" + this.state.charArray[idx]);
+        let isWord = false;
+        this.state.wordIndices.forEach((wordIdx, i) =>{
+            if(idx >= wordIdx && idx < wordIdx + gameParameters.wordLength){
+                console.log("Clicked: " + gameParameters.words[i]);
+                isWord=true;
+            }
+        })
+        if(!isWord) console.log("Clicked:" + this.state.charArray[idx]);
     }
 
     generateIndices(){
