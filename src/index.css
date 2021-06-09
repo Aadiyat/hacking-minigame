@@ -69,3 +69,10 @@ ol, ul{
 .feedback{
   text-align: left;
 }
+
+.attempt-bullet{
+  height: 100%;
+  width: 100vh ;
+  background-color: black;
+  margin: 1vh;
+}
