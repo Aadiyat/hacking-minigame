@@ -22,3 +22,34 @@ code {
 button{
   font-family:inherit;
 }
+
+.game-board{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2%;
+}
+
+.remaining-attempts-text{
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.remaining-attempts{
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.first-symbol-column{
+  grid-column:1;
+  grid-row:2;
+}
+
+.second-symbol-column{
+ grid-column:2;
+ grid-row:2; 
+}
+
+.output-column{
+  grid-column:3;
+  grid-row:2;
+}

@@ -1,5 +1,5 @@
 import React from 'react';
-import Column from './Column.jsx'
+import SymbolColumn from './SymbolColumn.jsx'
 import Output from './Output.jsx';
 import RemainingAttempts from './RemainingAttempts.jsx';
 import RemainingAttemptsText from './RemainingAttemptsText.jsx';
@@ -18,21 +18,19 @@ class Screen extends React.Component{
             symbolArray: this.fillSymbolArray(indices),
             results: [],
             isGameWon: false,
-            tries: 3,
+            tries: 4,
         };
     }
 
     render(){
         const firstHalf = this.state.symbolArray.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
         const secondHalf = this.state.symbolArray.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
-        return (<div>
-                    <RemainingAttemptsText/>
-                    <RemainingAttempts numAttempts = {this.state.tries}/>
-                    <p>Col1</p>
-                    <Column symbolSubArray = {firstHalf} onClick = {(lineIdx, charIdx)=>this.handleClick(0, lineIdx, charIdx)}></Column>
-                    <p>Col2</p>
-                    <Column symbolSubArray = {secondHalf} onClick ={(lineIdx, charIdx)=>this.handleClick(1, lineIdx, charIdx)}></Column>
-                    <Output results = {this.state.results}/>
+        return (<div className="game-board">
+                    <RemainingAttemptsText className = "remaining-attempts-text"/>
+                    <RemainingAttempts className = "remaining-attempts" numAttempts = {this.state.tries}/>
+                    <SymbolColumn className="first-symbol-column" symbolSubArray = {firstHalf} onClick = {(lineIdx, charIdx)=>this.handleClick(0, lineIdx, charIdx)}></SymbolColumn>
+                    <SymbolColumn className="second-symbol-column" symbolSubArray = {secondHalf} onClick ={(lineIdx, charIdx)=>this.handleClick(1, lineIdx, charIdx)}></SymbolColumn>
+                    <Output className="output-column" results = {this.state.results}/>
                 </div>);
     }
     

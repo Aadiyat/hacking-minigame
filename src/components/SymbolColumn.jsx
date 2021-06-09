@@ -4,12 +4,12 @@ import Line from './Line.jsx'
 
 import * as gameParameters from './gameParameters.js'
 
-class Column extends React.Component{
+class SymbolColumn extends React.Component{
 
     render(){
         return (
             // TODO: render lines in a more programmatic way. This isn't great.
-            <div>
+            <div className = {this.props.className}>
                 {this.renderLine(0)}
                 {this.renderLine(1)}
                 {this.renderLine(2)}
@@ -32,4 +32,4 @@ class Column extends React.Component{
     }
 }
 
-export default Column;
+export default SymbolColumn;

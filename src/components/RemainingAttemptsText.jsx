@@ -1,7 +1,7 @@
 import React from 'react'
 
-function RemainingAttemptsText(){
-    return (<p>Attempts remaining:</p>)
+function RemainingAttemptsText(props){
+    return (<p className = {props.className}>Attempts remaining:</p>)
 }
 
 export default RemainingAttemptsText;

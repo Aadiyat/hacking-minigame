@@ -5,7 +5,7 @@ function RemainingAttempts(props){
     for(let i = 0; i < props.numAttempts; i++){
         attempts.push(<span className="attempt-bullet">o</span>)
     }
-    return (<div>{attempts}</div>)
+    return (<div className={props.className}>{attempts}</div>)
 }
 
 export default RemainingAttempts

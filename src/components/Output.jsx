@@ -6,7 +6,7 @@ function Output(props){
     const results = props.results.map((result, i)=>{
         return (<li key = {i}><Result guess ={result.guess} numMatches = {result.numMatches}></Result></li>)
     })
-    return (<div>
+    return (<div className = {props.className}>
                 <ol>{results}</ol>
             </div>);
 }
