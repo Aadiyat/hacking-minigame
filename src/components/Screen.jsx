@@ -1,6 +1,6 @@
 import React from 'react';
 import SymbolColumn from './SymbolColumn.jsx'
-import Output from './Output.jsx';
+import Output from './Feedback.jsx';
 import RemainingAttempts from './RemainingAttempts.jsx';
 import RemainingAttemptsText from './RemainingAttemptsText.jsx';
 
@@ -49,7 +49,7 @@ class Screen extends React.Component{
                         onMouseLeave = {()=>this.handleMouseLeave()}
                         onClick ={(lineIdx, symbolIdx)=>this.handleClick(1, lineIdx, symbolIdx)}>
                     </SymbolColumn>
-                    <Output className="output-column" results = {this.state.results}/>
+                    <Output className="feedback-column" results = {this.state.results}/>
                 </div>);
     }
 

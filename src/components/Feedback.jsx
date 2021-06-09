@@ -1,8 +1,6 @@
 import React from 'react';
 
-import * as gameParameters from './gameParameters';
-
-function Output(props){
+function Feedback(props){
     const results = props.results.map((result, i)=>{
         return (<li key = {i}><Result guess ={result.guess} numMatches = {result.numMatches}></Result></li>)
     })
@@ -12,10 +10,10 @@ function Output(props){
 }
 
 function Result(props){
-    return (<div>
-                <div>{props.guess}</div>
-                <div>{props.numMatches}/{gameParameters.wordLength} correct.</div>
+    return (<div className="feedback">
+                <p>&gt;. {props.guess}</p>
+                <p>&gt;. Likeness = {props.numMatches}</p>
             </div>)
 }
 
-export default Output;
+export default Feedback;
