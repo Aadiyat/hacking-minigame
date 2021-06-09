@@ -19,39 +19,109 @@ class Screen extends React.Component{
             results: [],
             isGameWon: false,
             tries: 4,
+            highlightedSymbols: Array(gameParameters.symbolArrayLength).fill("symbol"),
         };
     }
 
     render(){
         const firstHalf = this.state.symbolArray.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
         const secondHalf = this.state.symbolArray.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
+
+        const highlightedSymbolsFirstHalf = this.state.highlightedSymbols.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
+        const highlightedSymbolsSecondHalf = this.state.highlightedSymbols.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
+
         return (<div className="game-board">
                     <RemainingAttemptsText className = "remaining-attempts-text"/>
                     <RemainingAttempts className = "remaining-attempts" numAttempts = {this.state.tries}/>
-                    <SymbolColumn className="first-symbol-column" symbolSubArray = {firstHalf} onClick = {(lineIdx, charIdx)=>this.handleClick(0, lineIdx, charIdx)}></SymbolColumn>
-                    <SymbolColumn className="second-symbol-column" symbolSubArray = {secondHalf} onClick ={(lineIdx, charIdx)=>this.handleClick(1, lineIdx, charIdx)}></SymbolColumn>
+                    <SymbolColumn  
+                        className="first-symbol-column" 
+                        symbolSubArray = {firstHalf} 
+                        highlightedSymbols = {highlightedSymbolsFirstHalf}
+                        onMouseEnter={(lineIdx, charIdx)=>this.handleMouseEnter(0, lineIdx, charIdx)}
+                        onMouseLeave = {()=>this.handleMouseLeave()}
+                        onClick = {(lineIdx, charIdx)=>this.handleClick(0, lineIdx, charIdx)}>
+                    </SymbolColumn>
+                    <SymbolColumn 
+                        className="second-symbol-column" 
+                        symbolSubArray = {secondHalf} 
+                        highlightedSymbols = {highlightedSymbolsSecondHalf}
+                        onMouseEnter = {(lineIdx, charIdx)=>this.handleMouseEnter(1, lineIdx, charIdx)}
+                        onMouseLeave = {()=>this.handleMouseLeave()}
+                        onClick ={(lineIdx, charIdx)=>this.handleClick(1, lineIdx, charIdx)}>
+                    </SymbolColumn>
                     <Output className="output-column" results = {this.state.results}/>
                 </div>);
     }
     
-    handleClick(col, line, i){
-        if(this.state.tries > 0 && !this.state.isGameWon){
-            const idx = Math.floor(gameParameters.symbolArrayLength/2)*col + gameParameters.lineLength*line + i;
-            let isWord = false;
+    // this.state.symbolArray is distributed among the columns and lines, 
+    // this uses the indices of the column, line and symbol within the line to calculate
+    // the index of the symbol in this.state.symbolArray
+    getSymbolArrayIdx(column, line, symbolIdx){
+        // Calculate index of the symbol in the symbol array
+        const symbolArrayIdx = Math.floor(gameParameters.symbolArrayLength/2)*column + gameParameters.lineLength*line + symbolIdx;
+        return symbolArrayIdx;
+    }
 
-            // Check if the selected symbol belongs to a word
-            this.state.wordStartIndices.forEach((wordStart, i) =>{
-                if(idx >= wordStart && idx < wordStart + gameParameters.wordLength){
-                    const word = gameParameters.words[i]
-                    const numMatches = this.checkWord(word)
-                    this.pushResult(word, numMatches);
-                    this.checkGameWon(numMatches)
-                    this.decreaseTries();
-                    isWord=true;
-                }
-            })
-            if(!isWord) console.log("Clicked:" + this.state.symbolArray[idx]);
+    // Checks if the selected symbol belongs to a word
+    // if the symbol belongs to a word, returns the index of the word in gameParameters.words
+    // returns -1 otherwise;
+    isWord(symbolArrayIdx){
+        let wordStartIdx = -1;
+        let wordIdx = -1;
+        this.state.wordStartIndices.forEach((wordStart, i) =>{
+            if(symbolArrayIdx >= wordStart && symbolArrayIdx < wordStart + gameParameters.wordLength){
+                wordStartIdx = wordStart;
+                wordIdx = i;
+            }
+        });
+
+        return {wordStartIdx, wordIdx};
+    }
+
+    handleClick(column, line, symbolIdx){
+        if(this.state.tries > 0 && !this.state.isGameWon){
+            const symbolArrayIdx = this.getSymbolArrayIdx(column, line, symbolIdx);
+            
+            const {wordStartIdx, wordIdx} = this.isWord(symbolArrayIdx);
+            if(wordIdx !== -1){
+                const word = gameParameters.words[wordIdx]
+                const numMatches = this.checkWord(word)
+                this.pushResult(word, numMatches);
+                this.checkGameWon(numMatches)
+                this.decreaseTries();
+            }
         }
+    }
+
+    handleMouseEnter(column, line, symbolIdx){
+        // Need to first clear highlights and then set specific highlights in a callback to deal with JS asynchrony nonsense
+        this.setState({highlightedSymbols:Array(gameParameters.symbolArrayLength).fill("symbol")}, ()=>{
+            if(this.state.tries > 0 && !this.state.isGameWon){
+                // Need to first reset the highlightedSymbol arrays, 
+                this.handleMouseLeave();
+                const symbolArrayIdx = this.getSymbolArrayIdx(column, line, symbolIdx);
+                let highlightedSymbols = this.state.highlightedSymbols.slice();
+
+                const {wordStartIdx, wordIdx} = this.isWord(symbolArrayIdx);
+                if(wordIdx !== -1){    
+                    for(let i = wordStartIdx; i<wordStartIdx + gameParameters.wordLength; i++){
+                        highlightedSymbols[i]="highlighted-symbol";
+                    }
+                }else{
+                    highlightedSymbols[symbolArrayIdx] = "highlighted-symbol";
+                }
+                this.setState({
+                    highlightedSymbols:highlightedSymbols,
+                });
+            }
+        });
+    }
+
+    handleMouseLeave(){
+        const highlightedSymbols = Array(gameParameters.symbolArrayLength).fill("symbol");
+        this.setState({
+            highlightedSymbols: highlightedSymbols,
+        })
     }
 
     decreaseTries(){

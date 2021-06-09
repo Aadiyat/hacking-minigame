@@ -28,7 +28,15 @@ class SymbolColumn extends React.Component{
 
     renderLine(lineIdx){
         const chars = this.props.symbolSubArray.slice(lineIdx*gameParameters.lineLength, lineIdx*gameParameters.lineLength + gameParameters.lineLength)
-        return (<div><Line lineChars = {chars} onClick= {(charIdx) => this.props.onClick(lineIdx, charIdx)}></Line></div>)
+        const highlightedSymbols = this.props.highlightedSymbols.slice(lineIdx*gameParameters.lineLength, lineIdx*gameParameters.lineLength + gameParameters.lineLength)
+        return (<div>
+                    <Line  lineChars = {chars}
+                            highlightedSymbols = {highlightedSymbols}
+                            onMouseEnter ={(charIdx) => this.props.onMouseEnter(lineIdx, charIdx)}
+                            onMouseLeave = {()=>this.props.onMouseLeave()}
+                            onClick= {(charIdx) => this.props.onClick(lineIdx, charIdx)}>
+                    </Line>
+                </div>)
     }
 }
 

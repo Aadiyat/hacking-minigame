@@ -53,3 +53,8 @@ button{
   grid-column:3;
   grid-row:2;
 }
+
+.highlighted-symbol{
+  color: white;
+  background-color: black;
+}
