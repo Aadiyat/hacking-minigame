@@ -1,9 +1,11 @@
 import React from 'react';
 import Column from './Column.jsx'
 import Output from './Output.jsx';
-import GameInfo from './GameInfo.jsx';
+import RemainingAttempts from './RemainingAttempts.jsx';
+import RemainingAttemptsText from './RemainingAttemptsText.jsx';
 
 import * as gameParameters from './gameParameters.js'
+
 
 class Screen extends React.Component{
     constructor(props){
@@ -24,7 +26,8 @@ class Screen extends React.Component{
         const firstHalf = this.state.symbolArray.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
         const secondHalf = this.state.symbolArray.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
         return (<div>
-                    <GameInfo tries = {this.state.tries}/>
+                    <RemainingAttemptsText/>
+                    <RemainingAttempts numAttempts = {this.state.tries}/>
                     <p>Col1</p>
                     <Column symbolSubArray = {firstHalf} onClick = {(lineIdx, charIdx)=>this.handleClick(0, lineIdx, charIdx)}></Column>
                     <p>Col2</p>
