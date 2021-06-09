@@ -1,16 +1,16 @@
 import React from 'react';
 
 function Line(props){
-    const chars = props.lineChars.map((char, idx)=>{
+    const symbols = props.lineSymbols.map((symbol, idx)=>{
         return (<span 
                         className = {props.highlightedSymbols[idx]}
                         onMouseEnter= {()=>props.onMouseEnter(idx)}
                         onMouseLeave={()=>props.onMouseLeave()}
-                        onClick={()=>props.onClick(idx)}>{char}
+                        onClick={()=>props.onClick(idx)}>{symbol}
                 </span>) 
     })
     return (
-        <p>{chars}</p>
+        <p>{symbols}</p>
     )
 }
 

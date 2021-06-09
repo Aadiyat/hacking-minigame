@@ -1,4 +1,4 @@
-/*Represents one column of characters on the Screen*/
+/*Represents one column of symbols on the Screen*/
 import React from 'react';
 import Line from './Line.jsx'
 
@@ -27,14 +27,14 @@ class SymbolColumn extends React.Component{
     }
 
     renderLine(lineIdx){
-        const chars = this.props.symbolSubArray.slice(lineIdx*gameParameters.lineLength, lineIdx*gameParameters.lineLength + gameParameters.lineLength)
+        const symbols = this.props.symbolSubArray.slice(lineIdx*gameParameters.lineLength, lineIdx*gameParameters.lineLength + gameParameters.lineLength)
         const highlightedSymbols = this.props.highlightedSymbols.slice(lineIdx*gameParameters.lineLength, lineIdx*gameParameters.lineLength + gameParameters.lineLength)
         return (<div>
-                    <Line  lineChars = {chars}
+                    <Line  lineSymbols = {symbols}
                             highlightedSymbols = {highlightedSymbols}
-                            onMouseEnter ={(charIdx) => this.props.onMouseEnter(lineIdx, charIdx)}
+                            onMouseEnter ={(symbolIdx) => this.props.onMouseEnter(lineIdx, symbolIdx)}
                             onMouseLeave = {()=>this.props.onMouseLeave()}
-                            onClick= {(charIdx) => this.props.onClick(lineIdx, charIdx)}>
+                            onClick= {(symbolIdx) => this.props.onClick(lineIdx, symbolIdx)}>
                     </Line>
                 </div>)
     }
