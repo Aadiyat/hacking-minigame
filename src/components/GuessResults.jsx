@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Feedback(props){
+function GuessResults(props){
     const results = props.results.map((result, i)=>{
         return (<li key = {i}><Result guess ={result.guess} numMatches = {result.numMatches}></Result></li>)
     })
@@ -16,4 +16,4 @@ function Result(props){
             </div>)
 }
 
-export default Feedback;
+export default GuessResults;
