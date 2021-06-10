@@ -1,9 +1,11 @@
 import React from 'react';
-import Column from './Column.jsx'
-import Output from './Output.jsx';
-import GameInfo from './GameInfo.jsx';
+import SymbolColumn from './SymbolColumn.jsx'
+import GuessResults from './GuessResults.jsx';
+import RemainingAttempts from './RemainingAttempts.jsx';
+import RemainingAttemptsText from './RemainingAttemptsText.jsx';
 
 import * as gameParameters from './gameParameters.js'
+
 
 class Screen extends React.Component{
     constructor(props){
@@ -16,43 +18,90 @@ class Screen extends React.Component{
             symbolArray: this.fillSymbolArray(indices),
             results: [],
             isGameWon: false,
-            tries: 3,
+            tries: 4,
+            symbolHighlightState: Array(gameParameters.symbolArrayLength).fill("symbol"),
         };
     }
 
     render(){
         const firstHalf = this.state.symbolArray.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
         const secondHalf = this.state.symbolArray.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
-        return (<div>
-                    <GameInfo tries = {this.state.tries}/>
-                    <p>Col1</p>
-                    <Column symbolSubArray = {firstHalf} onClick = {(lineIdx, charIdx)=>this.handleClick(0, lineIdx, charIdx)}></Column>
-                    <p>Col2</p>
-                    <Column symbolSubArray = {secondHalf} onClick ={(lineIdx, charIdx)=>this.handleClick(1, lineIdx, charIdx)}></Column>
-                    <Output results = {this.state.results}/>
+
+        const highlightedSymbolsFirstHalf = this.state.symbolHighlightState.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
+        const highlightedSymbolsSecondHalf = this.state.symbolHighlightState.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
+
+        return (<div className="game-board">
+                    <RemainingAttemptsText className = "remaining-attempts-text"/>
+                    <RemainingAttempts className = "remaining-attempts" numAttempts = {this.state.tries}/>
+                    <SymbolColumn  
+                        className="first-symbol-column" 
+                        symbolSubArray = {firstHalf} 
+                        highlightedSymbols = {highlightedSymbolsFirstHalf}
+                        onMouseEnter={(lineIdx, symbolIdx)=>this.handleMouseEnter(0, lineIdx, symbolIdx)}
+                        onMouseLeave = {()=>this.handleMouseLeave()}
+                        onClick = {(lineIdx, symbolIdx)=>this.handleClick(0, lineIdx, symbolIdx)}>
+                    </SymbolColumn>
+                    <SymbolColumn 
+                        className="second-symbol-column" 
+                        symbolSubArray = {secondHalf} 
+                        highlightedSymbols = {highlightedSymbolsSecondHalf}
+                        onMouseEnter = {(lineIdx, symbolIdx)=>this.handleMouseEnter(1, lineIdx, symbolIdx)}
+                        onMouseLeave = {()=>this.handleMouseLeave()}
+                        onClick ={(lineIdx, symbolIdx)=>this.handleClick(1, lineIdx, symbolIdx)}>
+                    </SymbolColumn>
+                    <GuessResults className="feedback-column" results = {this.state.results}/>
                 </div>);
     }
-    
-    handleClick(col, line, i){
-        if(this.state.tries > 0 && !this.state.isGameWon){
-            const idx = Math.floor(gameParameters.symbolArrayLength/2)*col + gameParameters.lineLength*line + i;
-            let isWord = false;
 
-            // Check if the selected symbol belongs to a word
-            this.state.wordStartIndices.forEach((wordStart, i) =>{
-                if(idx >= wordStart && idx < wordStart + gameParameters.wordLength){
-                    const word = gameParameters.words[i]
-                    const numMatches = this.checkWord(word)
-                    this.pushResult(word, numMatches);
-                    this.checkGameWon(numMatches)
-                    this.decreaseTries();
-                    isWord=true;
-                }
-            })
-            if(!isWord) console.log("Clicked:" + this.state.symbolArray[idx]);
+    /*---Event Handlers---*/
+
+    handleClick(column, line, symbolIdx){
+        if(this.state.tries > 0 && !this.state.isGameWon){
+            const symbolArrayIdx = this.getSymbolArrayIdx(column, line, symbolIdx);
+            
+            const {wordStartIdx, wordIdx} = this.isWord(symbolArrayIdx);
+            if(wordIdx !== -1){
+                const word = gameParameters.words[wordIdx]
+                const numMatches = this.compareWithPassword(word)
+                this.pushResult(word, numMatches);
+                this.checkGameWon(numMatches)
+                this.decreaseTries();
+            }
         }
     }
 
+    handleMouseEnter(column, line, symbolIdx){
+        if(this.state.tries > 0 && !this.state.isGameWon){
+            // Need to first clear highlights and then set specific highlights in a callback to deal with JS asynchrony nonsense
+            this.setState({symbolHighlightState:Array(gameParameters.symbolArrayLength).fill("symbol")}, ()=>{
+                const symbolArrayIdx = this.getSymbolArrayIdx(column, line, symbolIdx);
+                let highlightedSymbols = this.state.symbolHighlightState.slice();
+
+                // If the symbol is part of a word all the symbols of the word need to be highlighted
+                const {wordStartIdx, wordIdx} = this.isWord(symbolArrayIdx);
+                if(wordIdx !== -1){    
+                    for(let i = wordStartIdx; i<wordStartIdx + gameParameters.wordLength; i++){
+                        highlightedSymbols[i]="highlighted-symbol";
+                    }
+                }else{
+                    highlightedSymbols[symbolArrayIdx] = "highlighted-symbol";
+                }
+                
+                this.setState({
+                    symbolHighlightState:highlightedSymbols,
+                });
+            });
+        }
+    }
+
+    handleMouseLeave(){
+        const highlightedSymbols = Array(gameParameters.symbolArrayLength).fill("symbol");
+        this.setState({
+            symbolHighlightState: highlightedSymbols,
+        })
+    }
+    
+    /*---Game state functions---*/
     decreaseTries(){
         const tries = this.state.tries -1;
         this.setState({
@@ -84,17 +133,7 @@ class Screen extends React.Component{
         })
     }
 
-    checkWord(guess){
-        const guessArr = guess.split('');
-        const passwordArr = this.state.password.split('');
-        
-        let numMatches = 0;
-        passwordArr.forEach((char, i)=>{
-            if(char === guessArr[i]) numMatches++;
-        });
-
-        return numMatches;
-    }
+    /*---Initialiser functions: sets initial game state---*/
 
     // Generates random indices for an array, ensuring there is room between indices for a word to fit
     generateIndices(){
@@ -118,6 +157,69 @@ class Screen extends React.Component{
             }
     }
 
+    fillSymbolArray(wordStarts){
+        let symbolArr = Array(gameParameters.symbolArrayLength).fill(null);
+        let word, start, wordArr;
+        // Use wordStarts to fill characters for words ...
+        for(let i = 0; i<gameParameters.words.length; i++){
+            // The index for the ith word is the ith index in wordStarts
+            word = gameParameters.words[i];
+            start = wordStarts[i];
+            wordArr = word.split('');
+            for(let j =0; j<gameParameters.wordLength; j++){
+                symbolArr[start+j] = wordArr[j];
+            }
+        }
+
+        // Fill remaining spaces with random misc symbols ...
+        for(let i = 0; i<gameParameters.symbolArrayLength; i++){
+            if(symbolArr[i] == null){
+                symbolArr[i] = gameParameters.miscSymbols[Math.floor(Math.random()*gameParameters.miscSymbols.length)];
+            }
+        }
+
+        return symbolArr;
+    }
+
+    /*---Helper functions---*/
+
+    // this.state.symbolArray is distributed among the columns and lines, 
+    // this uses the indices of the column, line and symbol within the line to calculate
+    // the index of the symbol in this.state.symbolArray
+    getSymbolArrayIdx(column, line, symbolIdx){
+        // Calculate index of the symbol in the symbol array
+        const symbolArrayIdx = Math.floor(gameParameters.symbolArrayLength/2)*column + gameParameters.lineLength*line + symbolIdx;
+        return symbolArrayIdx;
+    }
+
+    // Checks if the selected symbol belongs to a word
+    // if the symbol belongs to a word, returns the index of the word in gameParameters.words
+    // returns -1 otherwise;
+    isWord(symbolArrayIdx){
+        let wordStartIdx = -1;
+        let wordIdx = -1;
+        this.state.wordStartIndices.forEach((wordStart, i) =>{
+            if(symbolArrayIdx >= wordStart && symbolArrayIdx < wordStart + gameParameters.wordLength){
+                wordStartIdx = wordStart;
+                wordIdx = i;
+            }
+        });
+
+        return {wordStartIdx, wordIdx};
+    }
+
+    compareWithPassword(guess){
+        const guessArr = guess.split('');
+        const passwordArr = this.state.password.split('');
+        
+        let numMatches = 0;
+        passwordArr.forEach((symbol, i)=>{
+            if(symbol === guessArr[i]) numMatches++;
+        });
+
+        return numMatches;
+    }
+
     // Recursive nature of generateWordIndices means that the the i+1 index will be before the i th index 
     // and the i+2 index will be after the first (assuming there is room). 
     // Shuffling the indices will make it more randomised 
@@ -138,29 +240,6 @@ class Screen extends React.Component{
         return array;
     }
 
-    fillSymbolArray(wordStarts){
-        let charArr = Array(gameParameters.symbolArrayLength).fill(null);
-        let word, start, wordArr;
-        // Use wordStarts to fill characters for words ...
-        for(let i = 0; i<gameParameters.words.length; i++){
-            // The index for the ith word is the ith index in wordStarts
-            word = gameParameters.words[i];
-            start = wordStarts[i];
-            wordArr = word.split('');
-            for(let j =0; j<gameParameters.wordLength; j++){
-                charArr[start+j] = wordArr[j];
-            }
-        }
-
-        // Fill remaining spaces with random special chars ...
-        for(let i = 0; i<gameParameters.symbolArrayLength; i++){
-            if(charArr[i] == null){
-                charArr[i] = gameParameters.miscSymbols[Math.floor(Math.random()*gameParameters.miscSymbols.length)];
-            }
-        }
-
-        return charArr;
-    }
 }
 
 export default Screen;
