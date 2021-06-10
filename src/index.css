@@ -76,3 +76,7 @@ ol, ul{
   background-color: black;
   margin: 1vh;
 }
+
+.welcome-message{
+  text-align: left;
+}
