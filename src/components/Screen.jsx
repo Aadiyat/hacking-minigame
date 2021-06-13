@@ -1,8 +1,9 @@
 import React from 'react';
-import SymbolColumn from './SymbolColumn.jsx'
-import GuessResults from './GuessResults.jsx';
-import RemainingAttempts from './RemainingAttempts.jsx';
-import RemainingAttemptsText from './RemainingAttemptsText.jsx';
+import SymbolColumn from './SymbolColumn'
+import GuessResults from './GuessResults';
+import RemainingAttempts from './RemainingAttempts';
+import RemainingAttemptsText from './RemainingAttemptsText';
+import AddressColumn from './AddressColumn';
 
 import * as gameParameters from './gameParameters.js'
 
@@ -20,6 +21,7 @@ class Screen extends React.Component{
             isGameWon: false,
             tries: 4,
             symbolHighlightState: Array(gameParameters.symbolArrayLength).fill("symbol"),
+            addresses: this.generateAddresses(),
         };
     }
 
@@ -30,25 +32,33 @@ class Screen extends React.Component{
         const highlightedSymbolsFirstHalf = this.state.symbolHighlightState.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
         const highlightedSymbolsSecondHalf = this.state.symbolHighlightState.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
 
+        const firstColumnAddresses = this.state.addresses.slice(0, gameParameters.numLines);
+        const secondColumnAddresses = this.state.addresses.slice(gameParameters.numLines, gameParameters.numLines*2);
+
+
         return (<div className="game-board">
                     <RemainingAttemptsText className = "remaining-attempts-text"/>
                     <RemainingAttempts className = "remaining-attempts" numAttempts = {this.state.tries}/>
-                    <SymbolColumn  
-                        className="first-symbol-column" 
-                        symbolSubArray = {firstHalf} 
-                        highlightedSymbols = {highlightedSymbolsFirstHalf}
-                        onMouseEnter={(lineIdx, symbolIdx)=>this.handleMouseEnter(0, lineIdx, symbolIdx)}
-                        onMouseLeave = {()=>this.handleMouseLeave()}
-                        onClick = {(lineIdx, symbolIdx)=>this.handleClick(0, lineIdx, symbolIdx)}>
-                    </SymbolColumn>
-                    <SymbolColumn 
-                        className="second-symbol-column" 
-                        symbolSubArray = {secondHalf} 
-                        highlightedSymbols = {highlightedSymbolsSecondHalf}
-                        onMouseEnter = {(lineIdx, symbolIdx)=>this.handleMouseEnter(1, lineIdx, symbolIdx)}
-                        onMouseLeave = {()=>this.handleMouseLeave()}
-                        onClick ={(lineIdx, symbolIdx)=>this.handleClick(1, lineIdx, symbolIdx)}>
-                    </SymbolColumn>
+                    <div className = "column-container first-column-container">
+                        <AddressColumn  addresses = {firstColumnAddresses}/>
+                        <SymbolColumn
+                            symbolSubArray = {firstHalf} 
+                            highlightedSymbols = {highlightedSymbolsFirstHalf}
+                            onMouseEnter={(lineIdx, symbolIdx)=>this.handleMouseEnter(0, lineIdx, symbolIdx)}
+                            onMouseLeave = {()=>this.handleMouseLeave()}
+                            onClick = {(lineIdx, symbolIdx)=>this.handleClick(0, lineIdx, symbolIdx)}>
+                        </SymbolColumn>
+                    </div>
+                    <div className = "column-container second-column-container">
+                        <AddressColumn addresses={secondColumnAddresses}/>
+                        <SymbolColumn
+                            symbolSubArray = {secondHalf} 
+                            highlightedSymbols = {highlightedSymbolsSecondHalf}
+                            onMouseEnter = {(lineIdx, symbolIdx)=>this.handleMouseEnter(1, lineIdx, symbolIdx)}
+                            onMouseLeave = {()=>this.handleMouseLeave()}
+                            onClick ={(lineIdx, symbolIdx)=>this.handleClick(1, lineIdx, symbolIdx)}>
+                        </SymbolColumn>
+                    </div>
                     <GuessResults className="feedback-column" results = {this.state.results}/>
                 </div>);
     }
@@ -181,6 +191,31 @@ class Screen extends React.Component{
         return symbolArr;
     }
 
+    generateAddresses(){
+        const byteSize = 8; //TODO: define bytesize elsewhere?
+        let addresses = Array(gameParameters.numLines*2);
+
+        const startingAddress = this.generateStartingAddress();
+
+        for(let i=0; i<addresses.length; i++){
+            addresses[i] = startingAddress+(i*byteSize);
+        }
+
+        return addresses;
+    }
+
+    generateStartingAddress(){
+        const byteSize = 8;
+        const maxAddress = 0xFFFF - (32*byteSize)+byteSize;
+
+        let startingAddress = Math.ceil(Math.random()*maxAddress) + byteSize;
+
+        const remainder = startingAddress%byteSize;
+        startingAddress = startingAddress - remainder; //Removing the remainder ensures the address is a multiple of 8
+
+        return startingAddress;
+    }
+
     /*---Helper functions---*/
 
     // this.state.symbolArray is distributed among the columns and lines, 
@@ -239,7 +274,6 @@ class Screen extends React.Component{
         }
         return array;
     }
-
 }
 
 export default Screen;

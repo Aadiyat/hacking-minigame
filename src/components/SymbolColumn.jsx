@@ -5,11 +5,10 @@ import Line from './Line.jsx'
 import * as gameParameters from './gameParameters.js'
 
 class SymbolColumn extends React.Component{
-
     render(){
         return (
             // TODO: render lines in a more programmatic way. This isn't great.
-            <div className = {this.props.className}>
+            <div className="symbol-column" >
                 {this.renderLine(0)}
                 {this.renderLine(1)}
                 {this.renderLine(2)}
