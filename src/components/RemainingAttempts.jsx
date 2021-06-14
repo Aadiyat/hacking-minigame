@@ -1,10 +1,9 @@
 import React from 'react';
 
 function RemainingAttempts(props){
-    let attempts =  [];
-    for(let i = 0; i < props.numAttempts; i++){
-        attempts.push(<span className="attempt-bullet">""</span>)
-    }
+    const attempts =  Array.from({length:props.numAttempts}, 
+                                    (_, i) =><span className="attempt-bullet">__</span>);
+    
     return (<p className={props.className}>{attempts}</p>)
 }
 

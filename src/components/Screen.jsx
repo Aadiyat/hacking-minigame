@@ -1,9 +1,8 @@
 import React from 'react';
-import SymbolColumn from './SymbolColumn'
 import GuessResults from './GuessResults';
 import RemainingAttempts from './RemainingAttempts';
 import RemainingAttemptsText from './RemainingAttemptsText';
-import AddressColumn from './AddressColumn';
+import ColumnContainer from './ColumnContainer';
 
 import * as gameParameters from './gameParameters.js'
 
@@ -16,51 +15,57 @@ class Screen extends React.Component{
         this.state = {
             password: gameParameters.words[Math.floor(Math.random()*gameParameters.words.length)],
             wordStartIndices: indices,
+            //TODO: Maybe put the symbols and their highlight state into a single object?
             symbolArray: this.fillSymbolArray(indices),
+            symbolHighlightState: Array(gameParameters.symbolArrayLength).fill("symbol"),
             results: [],
             isGameWon: false,
             tries: 4,
-            symbolHighlightState: Array(gameParameters.symbolArrayLength).fill("symbol"),
             addresses: this.generateAddresses(),
         };
     }
 
     render(){
-        const firstHalf = this.state.symbolArray.slice(0,Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns));
-        const secondHalf = this.state.symbolArray.slice(Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns), gameParameters.symbolArrayLength);
-
-        const highlightedSymbolsFirstHalf = this.state.symbolHighlightState.slice(0,Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns));
-        const highlightedSymbolsSecondHalf = this.state.symbolHighlightState.slice(Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns), gameParameters.symbolArrayLength);
-
-        const firstColumnAddresses = this.state.addresses.slice(0, gameParameters.linesPerColumn);
-        const secondColumnAddresses = this.state.addresses.slice(gameParameters.linesPerColumn, gameParameters.linesPerColumn*gameParameters.numColumns);
-
-
+        const columns = this.renderColumns();
         return (<div className="game-board">
                     <RemainingAttemptsText className = "remaining-attempts-text"/>
                     <RemainingAttempts className = "remaining-attempts" numAttempts = {this.state.tries}/>
-                    <div className = "column-container first-column-container">
-                        <AddressColumn  addresses = {firstColumnAddresses}/>
-                        <SymbolColumn
-                            symbolSubArray = {firstHalf} 
-                            highlightedSymbols = {highlightedSymbolsFirstHalf}
-                            onMouseEnter={(lineIdx, symbolIdx)=>this.handleMouseEnter(0, lineIdx, symbolIdx)}
-                            onMouseLeave = {()=>this.handleMouseLeave()}
-                            onClick = {(lineIdx, symbolIdx)=>this.handleClick(0, lineIdx, symbolIdx)}>
-                        </SymbolColumn>
-                    </div>
-                    <div className = "column-container second-column-container">
-                        <AddressColumn addresses={secondColumnAddresses}/>
-                        <SymbolColumn
-                            symbolSubArray = {secondHalf} 
-                            highlightedSymbols = {highlightedSymbolsSecondHalf}
-                            onMouseEnter = {(lineIdx, symbolIdx)=>this.handleMouseEnter(1, lineIdx, symbolIdx)}
-                            onMouseLeave = {()=>this.handleMouseLeave()}
-                            onClick ={(lineIdx, symbolIdx)=>this.handleClick(1, lineIdx, symbolIdx)}>
-                        </SymbolColumn>
-                    </div>
+                    {columns}
                     <GuessResults className="feedback-column" results = {this.state.results}/>
                 </div>);
+    }
+
+    /*---Render Functions---*/
+    renderColumns(){
+        // Distributes the symbols among the columns
+        const symbolsPerColumn = Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns);
+
+        const symbolSubArrays = Array.from({length:gameParameters.numColumns},
+            (_, i) => this.state.symbolArray.slice(i*symbolsPerColumn, (i+1)*symbolsPerColumn));
+
+        // Distributes the corresponding symbol highlight state
+        const highlightStateSubArrays = Array.from({length:gameParameters.numColumns},
+            (_,i) => this.state.symbolHighlightState.slice(i*symbolsPerColumn, (i+1)*symbolsPerColumn));
+
+        // Distribute memoory address for lines
+        const addressSubArrays = Array.from({length: gameParameters.numColumns},
+            (_, i) => this.state.addresses.slice(i*gameParameters.linesPerColumn, (i+1)*gameParameters.linesPerColumn));
+
+        // Class names for cols
+        const colClassNames = ["first-column-container", "second-column-container"];
+
+        const columns = Array.from({length:gameParameters.numColumns},
+            (_, i) => <ColumnContainer
+                        className = {colClassNames[i]}
+                        addresses = {addressSubArrays[i]}
+                        symbols = {symbolSubArrays[i]} 
+                        highlightStates = {highlightStateSubArrays[i]}
+                        onMouseEnter={(lineIdx, symbolIdx)=>this.handleMouseEnter(i, lineIdx, symbolIdx)}
+                        onMouseLeave = {()=>this.handleMouseLeave()}
+                        onClick = {(lineIdx, symbolIdx)=>this.handleClick(i, lineIdx, symbolIdx)}
+                        />);
+
+        return columns;
     }
 
     /*---Event Handlers---*/
