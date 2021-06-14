@@ -8,7 +8,7 @@ class SymbolColumn extends React.Component{
     render(){
         // See this in case you forget how the below line works
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from#using_arrow_functions_and_array.from
-        const lines = Array.from({length:gameParameters.numLines},
+        const lines = Array.from({length:gameParameters.linesPerColumn},
                                      (_, i) => this.renderLine(i));
         return (
             <div className="symbol-column" >{lines}</div>
@@ -16,8 +16,8 @@ class SymbolColumn extends React.Component{
     }
 
     renderLine(lineIdx){
-        const symbols = this.props.symbolSubArray.slice(lineIdx*gameParameters.lineLength, lineIdx*gameParameters.lineLength + gameParameters.lineLength)
-        const highlightedSymbols = this.props.highlightedSymbols.slice(lineIdx*gameParameters.lineLength, lineIdx*gameParameters.lineLength + gameParameters.lineLength)
+        const symbols = this.props.symbolSubArray.slice(lineIdx*gameParameters.symbolsPerLine, lineIdx*gameParameters.symbolsPerLine + gameParameters.symbolsPerLine)
+        const highlightedSymbols = this.props.highlightedSymbols.slice(lineIdx*gameParameters.symbolsPerLine, lineIdx*gameParameters.symbolsPerLine + gameParameters.symbolsPerLine)
         return (<Line  lineSymbols = {symbols}
                         highlightedSymbols = {highlightedSymbols}
                         onMouseEnter ={(symbolIdx) => this.props.onMouseEnter(lineIdx, symbolIdx)}

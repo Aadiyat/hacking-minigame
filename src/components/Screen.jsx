@@ -26,14 +26,14 @@ class Screen extends React.Component{
     }
 
     render(){
-        const firstHalf = this.state.symbolArray.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
-        const secondHalf = this.state.symbolArray.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
+        const firstHalf = this.state.symbolArray.slice(0,Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns));
+        const secondHalf = this.state.symbolArray.slice(Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns), gameParameters.symbolArrayLength);
 
-        const highlightedSymbolsFirstHalf = this.state.symbolHighlightState.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
-        const highlightedSymbolsSecondHalf = this.state.symbolHighlightState.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
+        const highlightedSymbolsFirstHalf = this.state.symbolHighlightState.slice(0,Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns));
+        const highlightedSymbolsSecondHalf = this.state.symbolHighlightState.slice(Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns), gameParameters.symbolArrayLength);
 
-        const firstColumnAddresses = this.state.addresses.slice(0, gameParameters.numLines);
-        const secondColumnAddresses = this.state.addresses.slice(gameParameters.numLines, gameParameters.numLines*2);
+        const firstColumnAddresses = this.state.addresses.slice(0, gameParameters.linesPerColumn);
+        const secondColumnAddresses = this.state.addresses.slice(gameParameters.linesPerColumn, gameParameters.linesPerColumn*gameParameters.numColumns);
 
 
         return (<div className="game-board">
@@ -69,7 +69,7 @@ class Screen extends React.Component{
         if(this.state.tries > 0 && !this.state.isGameWon){
             const symbolArrayIdx = this.getSymbolArrayIdx(column, line, symbolIdx);
             
-            const {wordStartIdx, wordIdx} = this.isWord(symbolArrayIdx);
+            const {_, wordIdx} = this.isWord(symbolArrayIdx);
             if(wordIdx !== -1){
                 const word = gameParameters.words[wordIdx]
                 const numMatches = this.compareWithPassword(word)
@@ -193,7 +193,7 @@ class Screen extends React.Component{
 
     generateAddresses(){
         const byteSize = 8; //TODO: define bytesize elsewhere?
-        let addresses = Array(gameParameters.numLines*2);
+        let addresses = Array(gameParameters.linesPerColumn*gameParameters.numColumns);
 
         const startingAddress = this.generateStartingAddress();
 
@@ -204,11 +204,14 @@ class Screen extends React.Component{
         return addresses;
     }
 
+    // Generates a random memory address
+    // The address space goes from 0x0000 through to 0xFFFF
+    // Memory is byte addressable
     generateStartingAddress(){
         const byteSize = 8;
-        const maxAddress = 0xFFFF - (32*byteSize)+byteSize;
+        const maxAddress = 0xFFFF - (gameParameters.linesPerColumn*gameParameters.numColumns*byteSize)+byteSize;
 
-        let startingAddress = Math.ceil(Math.random()*maxAddress) + byteSize;
+        let startingAddress = Math.ceil(Math.random()*maxAddress);
 
         const remainder = startingAddress%byteSize;
         startingAddress = startingAddress - remainder; //Removing the remainder ensures the address is a multiple of 8
@@ -223,7 +226,7 @@ class Screen extends React.Component{
     // the index of the symbol in this.state.symbolArray
     getSymbolArrayIdx(column, line, symbolIdx){
         // Calculate index of the symbol in the symbol array
-        const symbolArrayIdx = Math.floor(gameParameters.symbolArrayLength/2)*column + gameParameters.lineLength*line + symbolIdx;
+        const symbolArrayIdx = Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns)*column + gameParameters.symbolsPerLine*line + symbolIdx;
         return symbolArrayIdx;
     }
 
