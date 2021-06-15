@@ -7,7 +7,7 @@ import ColumnContainer from './ColumnContainer';
 import * as gameParameters from './gameParameters.js'
 
 
-class Screen extends React.Component{
+class Game extends React.Component{
     constructor(props){
         super(props);
         const indices = this.generateIndices();
@@ -284,4 +284,4 @@ class Screen extends React.Component{
     }
 }
 
-export default Screen;
+export default Game;
