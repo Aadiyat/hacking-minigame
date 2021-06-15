@@ -1,12 +1,14 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 
-import Screen from './components/Screen'
+import Game from './components/Game';
+import Welcome from './components/Welcome';
+
 function App() {
   return (
     <div className="App">
-      <Screen/>
+      <Welcome/>
+      <Game/>
     </div>
   );
 }

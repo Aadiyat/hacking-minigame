@@ -11,8 +11,8 @@ function GuessResults(props){
 
 function Result(props){
     return (<div className="feedback">
-                <p>&gt;. {props.guess}</p>
-                <p>&gt;. Likeness = {props.numMatches}</p>
+                <p>&gt;{props.guess}</p>
+                <p>&gt;Likeness = {props.numMatches}</p>
             </div>)
 }
 

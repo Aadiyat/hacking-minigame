@@ -1,13 +1,13 @@
 import React from 'react';
-import SymbolColumn from './SymbolColumn.jsx'
-import GuessResults from './GuessResults.jsx';
-import RemainingAttempts from './RemainingAttempts.jsx';
-import RemainingAttemptsText from './RemainingAttemptsText.jsx';
+import GuessResults from './GuessResults';
+import RemainingAttempts from './RemainingAttempts';
+import RemainingAttemptsText from './RemainingAttemptsText';
+import ColumnContainer from './ColumnContainer';
 
 import * as gameParameters from './gameParameters.js'
 
 
-class Screen extends React.Component{
+class Game extends React.Component{
     constructor(props){
         super(props);
         const indices = this.generateIndices();
@@ -15,42 +15,57 @@ class Screen extends React.Component{
         this.state = {
             password: gameParameters.words[Math.floor(Math.random()*gameParameters.words.length)],
             wordStartIndices: indices,
+            //TODO: Maybe put the symbols and their highlight state into a single object?
             symbolArray: this.fillSymbolArray(indices),
+            symbolHighlightState: Array(gameParameters.symbolArrayLength).fill("symbol"),
             results: [],
             isGameWon: false,
             tries: 4,
-            symbolHighlightState: Array(gameParameters.symbolArrayLength).fill("symbol"),
+            addresses: this.generateAddresses(),
         };
     }
 
     render(){
-        const firstHalf = this.state.symbolArray.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
-        const secondHalf = this.state.symbolArray.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
-
-        const highlightedSymbolsFirstHalf = this.state.symbolHighlightState.slice(0,Math.floor(gameParameters.symbolArrayLength/2));
-        const highlightedSymbolsSecondHalf = this.state.symbolHighlightState.slice(Math.floor(gameParameters.symbolArrayLength/2), gameParameters.symbolArrayLength);
-
+        const columns = this.renderColumns();
         return (<div className="game-board">
                     <RemainingAttemptsText className = "remaining-attempts-text"/>
                     <RemainingAttempts className = "remaining-attempts" numAttempts = {this.state.tries}/>
-                    <SymbolColumn  
-                        className="first-symbol-column" 
-                        symbolSubArray = {firstHalf} 
-                        highlightedSymbols = {highlightedSymbolsFirstHalf}
-                        onMouseEnter={(lineIdx, symbolIdx)=>this.handleMouseEnter(0, lineIdx, symbolIdx)}
-                        onMouseLeave = {()=>this.handleMouseLeave()}
-                        onClick = {(lineIdx, symbolIdx)=>this.handleClick(0, lineIdx, symbolIdx)}>
-                    </SymbolColumn>
-                    <SymbolColumn 
-                        className="second-symbol-column" 
-                        symbolSubArray = {secondHalf} 
-                        highlightedSymbols = {highlightedSymbolsSecondHalf}
-                        onMouseEnter = {(lineIdx, symbolIdx)=>this.handleMouseEnter(1, lineIdx, symbolIdx)}
-                        onMouseLeave = {()=>this.handleMouseLeave()}
-                        onClick ={(lineIdx, symbolIdx)=>this.handleClick(1, lineIdx, symbolIdx)}>
-                    </SymbolColumn>
+                    {columns}
                     <GuessResults className="feedback-column" results = {this.state.results}/>
                 </div>);
+    }
+
+    /*---Render Functions---*/
+    renderColumns(){
+        // Distributes the symbols among the columns
+        const symbolsPerColumn = Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns);
+
+        const symbolSubArrays = Array.from({length:gameParameters.numColumns},
+            (_, i) => this.state.symbolArray.slice(i*symbolsPerColumn, (i+1)*symbolsPerColumn));
+
+        // Distributes the corresponding symbol highlight state
+        const highlightStateSubArrays = Array.from({length:gameParameters.numColumns},
+            (_,i) => this.state.symbolHighlightState.slice(i*symbolsPerColumn, (i+1)*symbolsPerColumn));
+
+        // Distribute memoory address for lines
+        const addressSubArrays = Array.from({length: gameParameters.numColumns},
+            (_, i) => this.state.addresses.slice(i*gameParameters.linesPerColumn, (i+1)*gameParameters.linesPerColumn));
+
+        // Class names for cols
+        const colClassNames = ["first-column-container", "second-column-container"];
+
+        const columns = Array.from({length:gameParameters.numColumns},
+            (_, i) => <ColumnContainer
+                        className = {colClassNames[i]}
+                        addresses = {addressSubArrays[i]}
+                        symbols = {symbolSubArrays[i]} 
+                        highlightStates = {highlightStateSubArrays[i]}
+                        onMouseEnter={(lineIdx, symbolIdx)=>this.handleMouseEnter(i, lineIdx, symbolIdx)}
+                        onMouseLeave = {()=>this.handleMouseLeave()}
+                        onClick = {(lineIdx, symbolIdx)=>this.handleClick(i, lineIdx, symbolIdx)}
+                        />);
+
+        return columns;
     }
 
     /*---Event Handlers---*/
@@ -59,7 +74,7 @@ class Screen extends React.Component{
         if(this.state.tries > 0 && !this.state.isGameWon){
             const symbolArrayIdx = this.getSymbolArrayIdx(column, line, symbolIdx);
             
-            const {wordStartIdx, wordIdx} = this.isWord(symbolArrayIdx);
+            const {_, wordIdx} = this.isWord(symbolArrayIdx);
             if(wordIdx !== -1){
                 const word = gameParameters.words[wordIdx]
                 const numMatches = this.compareWithPassword(word)
@@ -181,6 +196,34 @@ class Screen extends React.Component{
         return symbolArr;
     }
 
+    generateAddresses(){
+        const byteSize = 8; //TODO: define bytesize elsewhere?
+        let addresses = Array(gameParameters.linesPerColumn*gameParameters.numColumns);
+
+        const startingAddress = this.generateStartingAddress();
+
+        for(let i=0; i<addresses.length; i++){
+            addresses[i] = startingAddress+(i*byteSize);
+        }
+
+        return addresses;
+    }
+
+    // Generates a random memory address
+    // The address space goes from 0x0000 through to 0xFFFF
+    // Memory is byte addressable
+    generateStartingAddress(){
+        const byteSize = 8;
+        const maxAddress = 0xFFFF - (gameParameters.linesPerColumn*gameParameters.numColumns*byteSize)+byteSize;
+
+        let startingAddress = Math.ceil(Math.random()*maxAddress);
+
+        const remainder = startingAddress%byteSize;
+        startingAddress = startingAddress - remainder; //Removing the remainder ensures the address is a multiple of 8
+
+        return startingAddress;
+    }
+
     /*---Helper functions---*/
 
     // this.state.symbolArray is distributed among the columns and lines, 
@@ -188,7 +231,7 @@ class Screen extends React.Component{
     // the index of the symbol in this.state.symbolArray
     getSymbolArrayIdx(column, line, symbolIdx){
         // Calculate index of the symbol in the symbol array
-        const symbolArrayIdx = Math.floor(gameParameters.symbolArrayLength/2)*column + gameParameters.lineLength*line + symbolIdx;
+        const symbolArrayIdx = Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns)*column + gameParameters.symbolsPerLine*line + symbolIdx;
         return symbolArrayIdx;
     }
 
@@ -239,7 +282,6 @@ class Screen extends React.Component{
         }
         return array;
     }
-
 }
 
-export default Screen;
+export default Game;
