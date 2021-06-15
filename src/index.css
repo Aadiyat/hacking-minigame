@@ -8,10 +8,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
 body {
-  margin: 0;
   font-family: 'Share Tech Mono', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* this makes the body a flex container
+  and the App component within centered*/
+  display:flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: black;
+  color: limegreen;
 }
 
 code {
@@ -19,18 +27,22 @@ code {
     monospace;
 }
 
-button{
-  font-family:inherit;
-}
-
 ol, ul{
   list-style-type: none;
+  margin: 0px;
+  padding: 0px;
+}
+
+li, p {
+  line-height: 1.25;
+  margin:0px;
 }
 
 .game-board{
   display:grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 2%;
+  gap: 1ch;
+  max-width: max-content;
 }
 
 .remaining-attempts-text{
@@ -46,6 +58,11 @@ ol, ul{
 .column-container {
   display: grid;
   grid-template-columns: 1fr 2fr;
+  gap: 1ch;
+
+  margin:0px;
+  padding: 0px;
+  max-width: max-content;
 }
 
 .first-column-container{
@@ -68,21 +85,16 @@ ol, ul{
 }
 
 .highlighted-symbol{
-  color: white;
-  background-color: black;
-}
-
-.feedback{
-  text-align: left;
+  color: black;
+  background-color: limegreen;
 }
 
 .attempt-bullet{
   height: 100%;
-  width: 100vh ;
-  background-color: black;
-  margin: 1vh;
+  background-color: limegreen;
+  margin-right: 1ch;
 }
 
 .welcome-message{
-  text-align: left;
+  margin-bottom: 1%;
 }
