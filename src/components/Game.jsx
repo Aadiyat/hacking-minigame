@@ -20,8 +20,9 @@ class Game extends React.Component{
             symbolHighlightState: Array(gameParameters.symbolArrayLength).fill("symbol"),
             results: [],
             isGameWon: false,
-            tries: 4,
+            tries: gameParameters.initialTries,
             addresses: this.generateAddresses(),
+            openBracketsClickedSoFar: []
         };
     }
 
@@ -36,6 +37,8 @@ class Game extends React.Component{
     }
 
     /*---Render Functions---*/
+
+    //TODO: Possibly make another component that wraps around the two column containers?
     renderColumns(){
         // Distributes the symbols among the columns
         const symbolsPerColumn = Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns);
@@ -122,6 +125,13 @@ class Game extends React.Component{
         this.setState({
             tries : tries,
         })
+    }
+
+    resetTries(){
+        this.setState({
+            tries:gameParameters.initialTries,
+        });
+
     }
 
     checkGameWon(numMatches){
@@ -249,6 +259,31 @@ class Game extends React.Component{
         });
 
         return {wordStartIdx, wordIdx};
+    }
+    
+    isOpenBracket(column, line, symbolIdx){
+        const openBrackets  = ['<', '(', '{', '['];
+        const closeBrackets = ['>', ')', '}', ']'];
+
+        const symbolArrayIdx = this.getSymbolArrayIdx(column, line, symbolIdx)
+        const endOfLine = symbolArrayIdx + (gameParameters.symbolsPerLine - (this.getSymbolArrayIdx % gameParameters.symbolsPerLine));
+        const bracketIdx = openBrackets.indexOf(this.props.lineSymbols[idx]);
+
+        if(bracketIdx === -1){ // user did not click on an open bracket
+            return false;
+        }
+        else{
+            const correspondingCloseBracket = closeBrackets[bracketIdx];
+            remainingSymbolsInLine = this.state.symbolArray.slice(symbolArrayIdx+1, endOfLine);
+            const hasCloseBracket = remainingSymbolsInLine.indexOf(correspondingCloseBracket);
+            if(hasCloseBracket !== -1){
+                openBracketsClickedSoFar = this.state.openBracketsClickedSoFar.slice();
+                openBracketsClickedSoFar.push(symbolArrayIdx);
+                //doSomething();
+            }
+
+
+        }
     }
 
     compareWithPassword(guess){

@@ -9,3 +9,4 @@ export const symbolsPerLine= 12;
 export const linesPerColumn = 16;
 export const numColumns = 2;
 export const symbolArrayLength= symbolsPerLine*linesPerColumn*numColumns;
+export const initialTries = 4;
