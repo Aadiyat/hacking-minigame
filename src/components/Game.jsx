@@ -79,21 +79,19 @@ class Game extends React.Component{
 
             // Need to check if the symbol is part of a word
             const {_, wordIdx} = this.isWord(symbolArrayIdx);
+            const {bracketStart, bracketEnd} = this.isBracketPair(symbolArrayIdx);
             if(wordIdx !== -1){
                this.checkGuess(this.state.words[wordIdx]._);
             }
-
-            const {bracketStart, bracketEnd} = this.isBracketPair(symbolArrayIdx);
-            if(bracketStart !== -1){
+            else if (bracketStart !== -1){
                 this.giveReward(this.state.symbolArray.slice(bracketStart, bracketEnd));
             }
-
-            // Else if need to check if it is a pair of open and close parentheses on the same line
-                // Handle that case
-                // Push reward (tries reset/dud removed)
-            // Otherwise
-                // Push 'error' message
-
+            else{
+                this.pushFeedbackMessage(<div>
+                                            <p>&gt;{this.state.symbolArray[symbolArrayIdx]}</p>
+                                            <p>&gt; Error</p>
+                                        </div>);
+            }
         }
     }
 
