@@ -15,7 +15,7 @@ function PlayerFeedback(props){
     const results = props.feedbackMessages.map((message, i)=>{
         return (<li key = {i}>{message}</li>)
     })
-    console.log(props.results);
+    
     return (<div className="feedback-column">
                 <ol>{results}</ol>
             </div>);

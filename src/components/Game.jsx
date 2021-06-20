@@ -10,13 +10,13 @@ import * as gameParameters from './gameParameters.js'
 class Game extends React.Component{
     constructor(props){
         super(props);
-        const indices = this.generateIndices();
-
+        const words = this.selectWords();
+        const password = words[Math.floor(Math.random()*gameParameters.words.length)]._; // choose a random word as the password
         this.state = {
-            password: gameParameters.words[Math.floor(Math.random()*gameParameters.words.length)],
-            wordStartIndices: indices,
+            words: words,
+            password: password,
             //TODO: Maybe put the symbols and their highlight state into a single object?
-            symbolArray: this.fillSymbolArray(indices),
+            symbolArray: this.fillSymbolArray(words),
             symbolHighlightState: Array(gameParameters.symbolArrayLength).fill("symbol"),
             feedbackMessages: [],
             isGameWon: false,
@@ -58,14 +58,14 @@ class Game extends React.Component{
         const colClassNames = ["first-column-container", "second-column-container"];
 
         const columns = Array.from({length:gameParameters.numColumns},
-            (_, i) => <ColumnContainer
-                        className = {colClassNames[i]}
-                        addresses = {addressSubArrays[i]}
-                        symbols = {symbolSubArrays[i]} 
-                        highlightStates = {highlightStateSubArrays[i]}
-                        onMouseEnter={(lineIdx, symbolIdx)=>this.handleMouseEnter(i, lineIdx, symbolIdx)}
+            (_, columnIdx) => <ColumnContainer
+                        className = {colClassNames[columnIdx]}
+                        addresses = {addressSubArrays[columnIdx]}
+                        symbols = {symbolSubArrays[columnIdx]} 
+                        highlightStates = {highlightStateSubArrays[columnIdx]}
+                        onMouseEnter={(lineIdx, symbolIdx)=>this.handleMouseEnter(columnIdx, lineIdx, symbolIdx)}
                         onMouseLeave = {()=>this.handleMouseLeave()}
-                        onClick = {(lineIdx, symbolIdx)=>this.handleClick(i, lineIdx, symbolIdx)}
+                        onClick = {(lineIdx, symbolIdx)=>this.handleClick(columnIdx, lineIdx, symbolIdx)}
                         />);
 
         return columns;
@@ -73,24 +73,21 @@ class Game extends React.Component{
 
     /*---Event Handlers---*/
 
-    handleClick(column, line, symbolIdx){
+    handleClick(columnIdx, lineIdx, symbolIdx){
         if(this.state.tries > 0 && !this.state.isGameWon){
-            const symbolArrayIdx = this.getSymbolArrayIdx(column, line, symbolIdx);
-            
-            // user clicks on a symbol
+            const symbolArrayIdx = this.getSymbolArrayIdx(columnIdx, lineIdx, symbolIdx);
+
             // Need to check if the symbol is part of a word
             const {_, wordIdx} = this.isWord(symbolArrayIdx);
             let message;
             if(wordIdx !== -1){
-               message = this.checkGuess(wordIdx);
+               message = this.checkGuess(this.state.words[wordIdx]._);
             }
 
-            const {openBracket, closeBracket} = this.isBracketPair(column, line, symbolIdx);
+            const {openBracket, closeBracket} = this.isBracketPair(symbolArrayIdx);
             if(openBracket !== -1){
                 this.giveReward(this.state.symbolArray.slice(openBracket, closeBracket));
             }
-
-           
 
             // Else if need to check if it is a pair of open and close parentheses on the same line
                 // Handle that case
@@ -101,10 +98,10 @@ class Game extends React.Component{
         }
     }
 
-    checkGuess(wordIdx){
-        const guess = gameParameters.words[wordIdx]
-        const numMatches = this.compareWithPassword(guess)
-        const gameWon = this.checkGameWon(numMatches)
+
+    checkGuess(guess){
+        const numMatches = this.compareWithPassword(guess);
+        const gameWon = this.checkGameWon(numMatches);
         this.decreaseTries();
 
         let accessMessage;
@@ -129,11 +126,11 @@ class Game extends React.Component{
         })
     }
 
-    handleMouseEnter(column, line, symbolIdx){
+    handleMouseEnter(columnIdx, lineIdx, symbolIdx){
         if(this.state.tries > 0 && !this.state.isGameWon){
             // Need to first clear highlights and then set specific highlights in a callback to deal with JS asynchrony nonsense
             this.setState({symbolHighlightState:Array(gameParameters.symbolArrayLength).fill("symbol")}, ()=>{
-                const symbolArrayIdx = this.getSymbolArrayIdx(column, line, symbolIdx);
+                const symbolArrayIdx = this.getSymbolArrayIdx(columnIdx, lineIdx, symbolIdx);
                 let highlightedSymbols = this.state.symbolHighlightState.slice();
 
                 // If the symbol is part of a word all the symbols of the word need to be highlighted
@@ -176,7 +173,7 @@ class Game extends React.Component{
     }
 
     checkGameWon(numMatches){
-        const gameWon = numMatches === gameParameters.wordLength
+        const gameWon = (numMatches === gameParameters.wordLength);
         
         this.setState({
             isGameWon:gameWon,
@@ -186,40 +183,62 @@ class Game extends React.Component{
     }
 
     /*---Initialiser functions: sets initial game state---*/
+    //Chooses 10 words from the list of 16 in gameParameters
+    selectWords(){
+        // Take a random subset of 10 words
+        let wordSubset = gameParameters.words.slice();
+        this.shuffle(wordSubset);
+        wordSubset = wordSubset.slice(0,gameParameters.numWords);
+        
+        // map to an array of objects with word and index properties
+        const words =  wordSubset.map(word => 
+            ({
+                _: word,    // doesn't really make sense to have a property called word in an object also called word
+                            // and it doesn't make sense to call the object anything else
+                startIndex: null
+             }));
+
+        // assign random starting indices for the words
+        const indices = this.generateStartingIndices();
+        words.forEach((word, i) => word.startIndex = indices[i]);
+
+        return words;
+    };
 
     // Generates random indices for an array, ensuring there is room between indices for a word to fit
-    generateIndices(){
-        let wordStartIdx = {
-            indices: Array(gameParameters.words.length).fill(null),
-            count: 0,
-        }
-        this.generateWordIndices(wordStartIdx, 0, gameParameters.symbolArrayLength-gameParameters.wordLength)
-        return this.shuffle(wordStartIdx.indices);
-    }
+    generateStartingIndices(){
+        let indices = Array(gameParameters.numWords);
+        let count = 0;
 
-    // Assumes there is an object wordIdx that contains an array of indices and keeps count of the number indices assigned so far
-    generateWordIndices(wordStartIdx, start, end){
-        if((end - start) >= (gameParameters.wordLength) // If there is room to put in a word
-            && wordStartIdx.count < gameParameters.words.length) // and if we need to assign another index
-            {
-                let rndIdx = Math.floor(start+Math.random()*(end-start)); // index between start and end (inclusive of start, but not end)
-                wordStartIdx.indices[wordStartIdx.count++] = rndIdx;
-                this.generateWordIndices(wordStartIdx, start, rndIdx - gameParameters.wordLength);
-                this.generateWordIndices(wordStartIdx, rndIdx + gameParameters.wordLength + 1, end);
+        let queue = [];
+        queue.push({start:0, end:(gameParameters.symbolArrayLength-gameParameters.wordLength)});
+
+        while(count < gameParameters.numWords){
+            let range = queue.shift();
+            
+            if((range.end - range.start) > gameParameters.wordLength){
+                let rndIdx = Math.floor(range.start + Math.random()*(range.end-range.start));
+                indices[count++] = rndIdx;
+                queue.push({start:range.start, end:rndIdx - gameParameters.wordLength});
+                queue.push({start: rndIdx + gameParameters.wordLength + 1, end:range.end});
             }
+        }
+
+        return indices;
     }
 
-    fillSymbolArray(wordStarts){
+    // Fills the symbol array with words starting at the corresponding starting index 
+    // and fills the remaining space with random symbols
+    fillSymbolArray(words){
         let symbolArr = Array(gameParameters.symbolArrayLength).fill(null);
-        let word, start, wordArr;
-        // Use wordStarts to fill characters for words ...
-        for(let i = 0; i<gameParameters.words.length; i++){
-            // The index for the ith word is the ith index in wordStarts
-            word = gameParameters.words[i];
-            start = wordStarts[i];
-            wordArr = word.split('');
+        let word, start, characters;
+        // Enter the words at the corresponding starting index
+        for(let i = 0; i<words.length; i++){
+            word = words[i];
+            start = word.startIndex;
+            characters = word._.split('');
             for(let j =0; j<gameParameters.wordLength; j++){
-                symbolArr[start+j] = wordArr[j];
+                symbolArr[start+j] = characters[j];
             }
         }
 
@@ -233,6 +252,7 @@ class Game extends React.Component{
         return symbolArr;
     }
 
+    // Generates a list of memory addresses for the decorative address column
     generateAddresses(){
         const byteSize = 8; //TODO: define bytesize elsewhere?
         let addresses = Array(gameParameters.linesPerColumn*gameParameters.numColumns);
@@ -266,9 +286,9 @@ class Game extends React.Component{
     // this.state.symbolArray is distributed among the columns and lines, 
     // this uses the indices of the column, line and symbol within the line to calculate
     // the index of the symbol in this.state.symbolArray
-    getSymbolArrayIdx(column, line, symbolIdx){
+    getSymbolArrayIdx(columnIdx, lineIdx, symbolIdx){
         // Calculate index of the symbol in the symbol array
-        const symbolArrayIdx = Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns)*column + gameParameters.symbolsPerLine*line + symbolIdx;
+        const symbolArrayIdx = Math.floor(gameParameters.symbolArrayLength/gameParameters.numColumns)*columnIdx + gameParameters.symbolsPerLine*lineIdx + symbolIdx;
         return symbolArrayIdx;
     }
 
@@ -278,9 +298,9 @@ class Game extends React.Component{
     isWord(symbolArrayIdx){
         let wordStartIdx = -1;
         let wordIdx = -1;
-        this.state.wordStartIndices.forEach((wordStart, i) =>{
-            if(symbolArrayIdx >= wordStart && symbolArrayIdx < wordStart + gameParameters.wordLength){
-                wordStartIdx = wordStart;
+        this.state.words.forEach((word, i) =>{
+            if(symbolArrayIdx >= word.startIndex && symbolArrayIdx < word.startIndex + gameParameters.wordLength){
+                wordStartIdx = word.startIndex;
                 wordIdx = i;
             }
         });
@@ -293,12 +313,12 @@ class Game extends React.Component{
         const openBrackets  = ['<', '(', '{', '['];
         const closeBrackets = ['>', ')', '}', ']'];
 
-        const endOfLine = symbolArrayIdx + (gameParameters.symbolsPerLine - (this.getSymbolArrayIdx % gameParameters.symbolsPerLine));
+        const endOfLineIdx = symbolArrayIdx + (gameParameters.symbolsPerLine - (symbolArrayIdx % gameParameters.symbolsPerLine)); // Finds where the current line ends
         const openBracketIdx = openBrackets.indexOf(this.state.symbolArray[symbolArrayIdx]); // Check if the clicked symbol appears in the list of open brackets
 
-        if(openBracketIdx !== -1){ // user clicked on an open bracket
+        if(openBracketIdx !== -1 && (endOfLineIdx >symbolArrayIdx)){ // user clicked on an open bracket
             const correspondingCloseBracket = closeBrackets[openBracketIdx];
-            const remainingSymbolsInLine = this.state.symbolArray.slice(symbolArrayIdx+1, endOfLine);
+            const remainingSymbolsInLine = this.state.symbolArray.slice(symbolArrayIdx+1, endOfLineIdx);
             const closeBracketIdx = remainingSymbolsInLine.indexOf(correspondingCloseBracket);
             if(closeBracketIdx !== -1){
                 return {openBracket: openBracketIdx, closeBracket: closeBracketIdx};                
@@ -310,6 +330,7 @@ class Game extends React.Component{
     // Randomly chooses between resetting the number of remaining tries and removing a dud
     // When the player clicks on a pair of brackets on the same line
     giveReward(symbols){
+        console.log("Hello");
         const rnd = Math.random();
         let rewardType;
         if(rnd < gameParameters.rewardSplit){
@@ -318,7 +339,7 @@ class Game extends React.Component{
         }
         else{
             rewardType = "Dud Removed."
-            this.removeDud();
+            //this.removeDud();
         }
 
         const message =(<div>
@@ -357,7 +378,6 @@ class Game extends React.Component{
             array[current] = array[randIdx];
             array[randIdx] = temp;
         }
-        return array;
     }
 }
 
