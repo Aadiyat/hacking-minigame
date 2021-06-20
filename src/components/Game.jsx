@@ -22,7 +22,7 @@ class Game extends React.Component{
             isGameWon: false,
             tries: gameParameters.initialTries,
             addresses: this.generateAddresses(),
-            openBracketsClickedSoFar: []
+            usedBracketPairs: []
         };
     }
 
@@ -79,14 +79,13 @@ class Game extends React.Component{
 
             // Need to check if the symbol is part of a word
             const {_, wordIdx} = this.isWord(symbolArrayIdx);
-            let message;
             if(wordIdx !== -1){
-               message = this.checkGuess(this.state.words[wordIdx]._);
+               this.checkGuess(this.state.words[wordIdx]._);
             }
 
-            const {openBracket, closeBracket} = this.isBracketPair(symbolArrayIdx);
-            if(openBracket !== -1){
-                this.giveReward(this.state.symbolArray.slice(openBracket, closeBracket));
+            const {bracketStart, bracketEnd} = this.isBracketPair(symbolArrayIdx);
+            if(bracketStart !== -1){
+                this.giveReward(this.state.symbolArray.slice(bracketStart, bracketEnd));
             }
 
             // Else if need to check if it is a pair of open and close parentheses on the same line
@@ -97,7 +96,6 @@ class Game extends React.Component{
 
         }
     }
-
 
     checkGuess(guess){
         const numMatches = this.compareWithPassword(guess);
@@ -169,6 +167,35 @@ class Game extends React.Component{
         this.setState({
             tries:gameParameters.initialTries,
         });
+
+    }
+
+    removeDud(){
+        // Filter out the password
+        let dudWords = [];
+        const words = this.state.words.slice();
+        words.forEach(word =>{
+            if(word._ !== this.state.password){
+                dudWords.push(word);
+            }
+        })
+
+        const dud = dudWords[Math.floor(Math.random()*dudWords.length)];
+        const dudIndex = words.indexOf(dud);
+        words.splice(dudIndex, 1); // remove dud from the list of words that are to be displayed
+
+        // Need to replace the symbols of the dud word with blanks
+        const dudStartIndex = this.state.words[dudIndex].startIndex;
+        const symbolArray = this.state.symbolArray.slice()
+
+        for(let i = dudStartIndex; i< dudStartIndex+gameParameters.wordLength; i++){
+            symbolArray[i] = '.';
+        }
+
+        this.setState({
+            symbolArray: symbolArray,
+            words: words,
+        })
 
     }
 
@@ -310,27 +337,35 @@ class Game extends React.Component{
     
     // Checks if the selected symbol is the opening bracket of a pair of brackets on the same line.
     isBracketPair(symbolArrayIdx){
-        const openBrackets  = ['<', '(', '{', '['];
-        const closeBrackets = ['>', ')', '}', ']'];
+        if(this.state.usedBracketPairs.indexOf(symbolArrayIdx) === -1){
+            const openBrackets  = ['<', '(', '{', '['];
+            const closeBrackets = ['>', ')', '}', ']'];
 
-        const endOfLineIdx = symbolArrayIdx + (gameParameters.symbolsPerLine - (symbolArrayIdx % gameParameters.symbolsPerLine)); // Finds where the current line ends
-        const openBracketIdx = openBrackets.indexOf(this.state.symbolArray[symbolArrayIdx]); // Check if the clicked symbol appears in the list of open brackets
+            const endOfLineIdx = symbolArrayIdx + (gameParameters.symbolsPerLine - (symbolArrayIdx % gameParameters.symbolsPerLine)); // Finds where the current line ends
+            const openBracket = openBrackets.indexOf(this.state.symbolArray[symbolArrayIdx]); // Check if the clicked symbol appears in the list of open brackets
 
-        if(openBracketIdx !== -1 && (endOfLineIdx >symbolArrayIdx)){ // user clicked on an open bracket
-            const correspondingCloseBracket = closeBrackets[openBracketIdx];
-            const remainingSymbolsInLine = this.state.symbolArray.slice(symbolArrayIdx+1, endOfLineIdx);
-            const closeBracketIdx = remainingSymbolsInLine.indexOf(correspondingCloseBracket);
-            if(closeBracketIdx !== -1){
-                return {openBracket: openBracketIdx, closeBracket: closeBracketIdx};                
+            if(openBracket !== -1 && (endOfLineIdx >symbolArrayIdx)){ // user clicked on an open bracket
+                // Check if the corresponding closing bracket appears in the remaining symbols in the line
+                const correspondingCloseBracket = closeBrackets[openBracket];
+                const remainingSymbolsInLine = this.state.symbolArray.slice(symbolArrayIdx, endOfLineIdx);
+                const closeBracketIdx = remainingSymbolsInLine.indexOf(correspondingCloseBracket);
+                console.log(closeBracketIdx);
+                if(closeBracketIdx !== -1){
+                    const usedBrackets = this.state.usedBracketPairs.slice();
+                    usedBrackets.push(symbolArrayIdx);
+                    this.setState({
+                        usedBracketPairs: usedBrackets,
+                    });
+                    return {bracketStart: symbolArrayIdx, bracketEnd: (symbolArrayIdx + closeBracketIdx + 1)};                
+                }
             }
         }
-        return {openBracket:-1, closeBracket: -1};
+        return {bracketStart:-1, bracketEnd: -1};
     }
 
     // Randomly chooses between resetting the number of remaining tries and removing a dud
     // When the player clicks on a pair of brackets on the same line
     giveReward(symbols){
-        console.log("Hello");
         const rnd = Math.random();
         let rewardType;
         if(rnd < gameParameters.rewardSplit){
@@ -339,7 +374,7 @@ class Game extends React.Component{
         }
         else{
             rewardType = "Dud Removed."
-            //this.removeDud();
+            this.removeDud();
         }
 
         const message =(<div>
