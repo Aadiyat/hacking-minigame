@@ -17,7 +17,7 @@ function PlayerFeedback(props){
     })
     
     return (<div className="feedback-column">
-                <ol>{results}</ol>
+                <ol>{results.slice(Math.max(results.length - 3, 0))}</ol>
             </div>);
 }
 
