@@ -1,5 +1,5 @@
 import React from 'react';
-import GuessResults from './GuessResults';
+import PlayerFeedback from './PlayerFeedback';
 import RemainingAttempts from './RemainingAttempts';
 import RemainingAttemptsText from './RemainingAttemptsText';
 import ColumnContainer from './ColumnContainer';
@@ -18,7 +18,7 @@ class Game extends React.Component{
             //TODO: Maybe put the symbols and their highlight state into a single object?
             symbolArray: this.fillSymbolArray(indices),
             symbolHighlightState: Array(gameParameters.symbolArrayLength).fill("symbol"),
-            results: [],
+            feedbackMessages: [],
             isGameWon: false,
             tries: gameParameters.initialTries,
             addresses: this.generateAddresses(),
@@ -29,10 +29,10 @@ class Game extends React.Component{
     render(){
         const columns = this.renderColumns();
         return (<div className="game-board">
-                    <RemainingAttemptsText className = "remaining-attempts-text"/>
-                    <RemainingAttempts className = "remaining-attempts" numAttempts = {this.state.tries}/>
+                    <RemainingAttemptsText/>
+                    <RemainingAttempts numAttempts = {this.state.tries}/>
                     {columns}
-                    <GuessResults className="feedback-column" results = {this.state.results}/>
+                    <PlayerFeedback feedbackMessages = {this.state.feedbackMessages}/>
                 </div>);
     }
 
@@ -77,15 +77,56 @@ class Game extends React.Component{
         if(this.state.tries > 0 && !this.state.isGameWon){
             const symbolArrayIdx = this.getSymbolArrayIdx(column, line, symbolIdx);
             
+            // user clicks on a symbol
+            // Need to check if the symbol is part of a word
             const {_, wordIdx} = this.isWord(symbolArrayIdx);
+            let message;
             if(wordIdx !== -1){
-                const word = gameParameters.words[wordIdx]
-                const numMatches = this.compareWithPassword(word)
-                this.pushResult(word, numMatches);
-                this.checkGameWon(numMatches)
-                this.decreaseTries();
+               message = this.checkGuess(wordIdx);
             }
+
+            const {openBracket, closeBracket} = this.isBracketPair(column, line, symbolIdx);
+            if(openBracket !== -1){
+                this.giveReward(this.state.symbolArray.slice(openBracket, closeBracket));
+            }
+
+           
+
+            // Else if need to check if it is a pair of open and close parentheses on the same line
+                // Handle that case
+                // Push reward (tries reset/dud removed)
+            // Otherwise
+                // Push 'error' message
+
         }
+    }
+
+    checkGuess(wordIdx){
+        const guess = gameParameters.words[wordIdx]
+        const numMatches = this.compareWithPassword(guess)
+        const gameWon = this.checkGameWon(numMatches)
+        this.decreaseTries();
+
+        let accessMessage;
+        if(gameWon){
+           accessMessage = "Entry Granted"
+        }
+        else{
+            accessMessage = "Entry Denied"
+        }    
+        this.pushFeedbackMessage(<div>
+                                    <p>&gt;{guess}</p>
+                                    <p>&gt;{accessMessage}</p>
+                                    <p>&gt;Likeness = {numMatches}</p>
+                                </div>);
+    }
+
+    pushFeedbackMessage(message){
+        const messages = this.state.feedbackMessages.slice();
+        messages.push(message);
+        this.setState({
+            feedbackMessages: messages,
+        })
     }
 
     handleMouseEnter(column, line, symbolIdx){
@@ -135,27 +176,13 @@ class Game extends React.Component{
     }
 
     checkGameWon(numMatches){
-        if(numMatches === gameParameters.wordLength){
-            this.setState({
-                isGameWon:true,
-            })
-        }
-    }
-
-    // TODO: Currently pushing an indefinite number of results
-    // The actual minigame in FO3/4 shows the 3 most recent results
-    pushResult(guess, numMatches){
-        const results = this.state.results;
-        const result = {
-            guess: guess,
-            numMatches: numMatches
-        }
-
-        results.push(result);
-
+        const gameWon = numMatches === gameParameters.wordLength
+        
         this.setState({
-            results: results,
+            isGameWon:gameWon,
         })
+
+        return gameWon;
     }
 
     /*---Initialiser functions: sets initial game state---*/
@@ -261,29 +288,44 @@ class Game extends React.Component{
         return {wordStartIdx, wordIdx};
     }
     
-    isOpenBracket(column, line, symbolIdx){
+    // Checks if the selected symbol is the opening bracket of a pair of brackets on the same line.
+    isBracketPair(symbolArrayIdx){
         const openBrackets  = ['<', '(', '{', '['];
         const closeBrackets = ['>', ')', '}', ']'];
 
-        const symbolArrayIdx = this.getSymbolArrayIdx(column, line, symbolIdx)
         const endOfLine = symbolArrayIdx + (gameParameters.symbolsPerLine - (this.getSymbolArrayIdx % gameParameters.symbolsPerLine));
-        const bracketIdx = openBrackets.indexOf(this.props.lineSymbols[idx]);
+        const openBracketIdx = openBrackets.indexOf(this.state.symbolArray[symbolArrayIdx]); // Check if the clicked symbol appears in the list of open brackets
 
-        if(bracketIdx === -1){ // user did not click on an open bracket
-            return false;
+        if(openBracketIdx !== -1){ // user clicked on an open bracket
+            const correspondingCloseBracket = closeBrackets[openBracketIdx];
+            const remainingSymbolsInLine = this.state.symbolArray.slice(symbolArrayIdx+1, endOfLine);
+            const closeBracketIdx = remainingSymbolsInLine.indexOf(correspondingCloseBracket);
+            if(closeBracketIdx !== -1){
+                return {openBracket: openBracketIdx, closeBracket: closeBracketIdx};                
+            }
+        }
+        return {openBracket:-1, closeBracket: -1};
+    }
+
+    // Randomly chooses between resetting the number of remaining tries and removing a dud
+    // When the player clicks on a pair of brackets on the same line
+    giveReward(symbols){
+        const rnd = Math.random();
+        let rewardType;
+        if(rnd < gameParameters.rewardSplit){
+            rewardType = "Tries Reset."
+            this.resetTries();
         }
         else{
-            const correspondingCloseBracket = closeBrackets[bracketIdx];
-            remainingSymbolsInLine = this.state.symbolArray.slice(symbolArrayIdx+1, endOfLine);
-            const hasCloseBracket = remainingSymbolsInLine.indexOf(correspondingCloseBracket);
-            if(hasCloseBracket !== -1){
-                openBracketsClickedSoFar = this.state.openBracketsClickedSoFar.slice();
-                openBracketsClickedSoFar.push(symbolArrayIdx);
-                //doSomething();
-            }
-
-
+            rewardType = "Dud Removed."
+            this.removeDud();
         }
+
+        const message =(<div>
+                            <p>&gt;{symbols}</p>
+                            <p>&gt;{rewardType}</p>
+                        </div>)
+        this.pushFeedbackMessage(message);
     }
 
     compareWithPassword(guess){

@@ -10,3 +10,4 @@ export const linesPerColumn = 16;
 export const numColumns = 2;
 export const symbolArrayLength= symbolsPerLine*linesPerColumn*numColumns;
 export const initialTries = 4;
+export const rewardSplit = 0.25;
