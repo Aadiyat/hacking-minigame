@@ -10,8 +10,8 @@ import * as gameParameters from './gameParameters.js'
 class Game extends React.Component{
     constructor(props){
         super(props);
-        const words = this.selectWords();
-        const password = words[Math.floor(Math.random()*gameParameters.words.length)]._; // choose a random word as the password
+        let words = this.selectWords();
+        const password = words[0]._; // Choose one word as the password. THe lsit is in random order so we can just take the first.
         this.state = {
             words: words,
             password: password,
@@ -84,6 +84,11 @@ class Game extends React.Component{
                this.checkGuess(this.state.words[wordIdx]._);
             }
             else if (bracketStart !== -1){
+                const usedBrackets = this.state.usedBracketPairs.slice();
+                    usedBrackets.push(symbolArrayIdx);
+                    this.setState({
+                        usedBracketPairs: usedBrackets,
+                    });
                 this.giveReward(this.state.symbolArray.slice(bracketStart, bracketEnd));
             }
             else{
@@ -131,11 +136,18 @@ class Game extends React.Component{
 
                 // If the symbol is part of a word all the symbols of the word need to be highlighted
                 const {wordStartIdx, wordIdx} = this.isWord(symbolArrayIdx);
+                const {bracketStart, bracketEnd} = this.isBracketPair(symbolArrayIdx);
                 if(wordIdx !== -1){    
                     for(let i = wordStartIdx; i<wordStartIdx + gameParameters.wordLength; i++){
                         highlightedSymbols[i]="highlighted-symbol";
                     }
-                }else{
+                }
+                else if(bracketStart !== -1){
+                    for(let i = bracketStart; i<bracketEnd;i++){
+                        highlightedSymbols[i]="highlighted-symbol";
+                    }
+                }
+                else{
                     highlightedSymbols[symbolArrayIdx] = "highlighted-symbol";
                 }
                 
@@ -224,14 +236,14 @@ class Game extends React.Component{
              }));
 
         // assign random starting indices for the words
-        const indices = this.generateStartingIndices();
+        const indices = this.generateWordStartIndices();
         words.forEach((word, i) => word.startIndex = indices[i]);
 
         return words;
     };
 
     // Generates random indices for an array, ensuring there is room between indices for a word to fit
-    generateStartingIndices(){
+    generateWordStartIndices(){
         let indices = Array(gameParameters.numWords);
         let count = 0;
 
@@ -349,11 +361,6 @@ class Game extends React.Component{
                 const closeBracketIdx = remainingSymbolsInLine.indexOf(correspondingCloseBracket);
                 console.log(closeBracketIdx);
                 if(closeBracketIdx !== -1){
-                    const usedBrackets = this.state.usedBracketPairs.slice();
-                    usedBrackets.push(symbolArrayIdx);
-                    this.setState({
-                        usedBracketPairs: usedBrackets,
-                    });
                     return {bracketStart: symbolArrayIdx, bracketEnd: (symbolArrayIdx + closeBracketIdx + 1)};                
                 }
             }
