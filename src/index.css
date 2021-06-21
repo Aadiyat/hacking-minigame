@@ -84,6 +84,18 @@ li, p {
   align-items: flex-end;
 }
 
+.feedback-grid{
+  display: grid
+}
+
+.previous-selection{
+  grid-row: 1;
+}
+
+.current-selection{
+  grid-row: 2;
+}
+
 .highlighted-symbol{
   color: black;
   background-color: limegreen;

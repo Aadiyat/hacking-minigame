@@ -1,4 +1,5 @@
 import React from 'react';
+import CurrentSelection from "./CurrentSelection";
 
 // We want to give feedback that informs the player about the result of clicking 
 // on a symbol
@@ -17,7 +18,10 @@ function PlayerFeedback(props){
     })
     
     return (<div className="feedback-column">
-                <ol>{results.slice(Math.max(results.length - 3, 0))}</ol>
+                <div className = "feedback-grid">
+                    <ol className = "previous-selection">{results.slice(Math.max(results.length - 3, 0))}</ol>
+                    <CurrentSelection className = "current-selection" currentSelection = {props.currentSelection}/>
+                </div>
             </div>);
 }
 

@@ -22,7 +22,8 @@ class Game extends React.Component{
             isGameWon: false,
             tries: gameParameters.initialTries,
             addresses: this.generateAddresses(),
-            usedBracketPairs: []
+            usedBracketPairs: [],
+            currentSelection: "|",
         };
     }
 
@@ -32,7 +33,7 @@ class Game extends React.Component{
                     <RemainingAttemptsText/>
                     <RemainingAttempts numAttempts = {this.state.tries}/>
                     {columns}
-                    <PlayerFeedback feedbackMessages = {this.state.feedbackMessages}/>
+                    <PlayerFeedback feedbackMessages = {this.state.feedbackMessages} currentSelection = {this.state.currentSelection}/>
                 </div>);
     }
 
@@ -137,22 +138,27 @@ class Game extends React.Component{
                 // If the symbol is part of a word all the symbols of the word need to be highlighted
                 const {wordStartIdx, wordIdx} = this.isWord(symbolArrayIdx);
                 const {bracketStart, bracketEnd} = this.isBracketPair(symbolArrayIdx);
-                if(wordIdx !== -1){    
+                let currentSelection = [];
+                if(wordIdx !== -1){
+                    currentSelection = this.state.symbolArray.slice(wordStartIdx, wordStartIdx + gameParameters.wordLength);
                     for(let i = wordStartIdx; i<wordStartIdx + gameParameters.wordLength; i++){
                         highlightedSymbols[i]="highlighted-symbol";
                     }
                 }
                 else if(bracketStart !== -1){
+                    currentSelection = this.state.symbolArray.slice(bracketStart, bracketEnd);
                     for(let i = bracketStart; i<bracketEnd;i++){
                         highlightedSymbols[i]="highlighted-symbol";
                     }
                 }
                 else{
+                    currentSelection = this.state.symbolArray.slice(symbolArrayIdx, symbolArrayIdx+1);
                     highlightedSymbols[symbolArrayIdx] = "highlighted-symbol";
                 }
                 
                 this.setState({
                     symbolHighlightState:highlightedSymbols,
+                    currentSelection: currentSelection,
                 });
             });
         }
@@ -162,6 +168,7 @@ class Game extends React.Component{
         const highlightedSymbols = Array(gameParameters.symbolArrayLength).fill("symbol");
         this.setState({
             symbolHighlightState: highlightedSymbols,
+            currentSelection: "|",
         })
     }
     
