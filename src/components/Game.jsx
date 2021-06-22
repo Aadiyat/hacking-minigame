@@ -11,13 +11,13 @@ class Game extends React.Component{
     constructor(props){
         super(props);
         let words = this.selectWords();
-        const password = words[0]._; // Choose one word as the password. THe lsit is in random order so we can just take the first.
+
         this.state = {
             words: words,
-            password: password,
+            password: words[0]._, // Choose one word as the password. The list is in random order so we can just take the first
             //TODO: Maybe put the symbols and their highlight state into a single object?
             symbolArray: this.fillSymbolArray(words),
-            symbolHighlightState: Array(gameParameters.symbolArrayLength).fill("symbol"),
+            symbolHighlightState: Array(gameParameters.symbolArrayLength).fill(""),
             feedbackMessages: [],
             isGameWon: false,
             tries: gameParameters.initialTries,
@@ -29,6 +29,8 @@ class Game extends React.Component{
 
     render(){
         const columns = this.renderColumns();
+        //TODO: The components have their own class names, but since those class names are responsible
+        // for the positioning the components in the grid, maybe the class names should be set here
         return (<div className="game-board">
                     <RemainingAttemptsText/>
                     <RemainingAttempts numAttempts = {this.state.tries}/>
@@ -77,14 +79,14 @@ class Game extends React.Component{
     handleClick(columnIdx, lineIdx, symbolIdx){
         if(this.state.tries > 0 && !this.state.isGameWon){
             const symbolArrayIdx = this.getSymbolArrayIdx(columnIdx, lineIdx, symbolIdx);
-
-            // Need to check if the symbol is part of a word
             const {_, wordIdx} = this.isWord(symbolArrayIdx);
             const {bracketStart, bracketEnd} = this.isBracketPair(symbolArrayIdx);
+
             if(wordIdx !== -1){
                this.checkGuess(this.state.words[wordIdx]._);
             }
-            else if (bracketStart !== -1){
+            else if(bracketStart !== -1){
+                // Add to list of used bracket pairs, so that the player can't infinitely get rewards
                 const usedBrackets = this.state.usedBracketPairs.slice();
                     usedBrackets.push(symbolArrayIdx);
                     this.setState({
@@ -99,33 +101,6 @@ class Game extends React.Component{
                                         </div>);
             }
         }
-    }
-
-    checkGuess(guess){
-        const numMatches = this.compareWithPassword(guess);
-        const gameWon = this.checkGameWon(numMatches);
-        this.decreaseTries();
-
-        let accessMessage;
-        if(gameWon){
-           accessMessage = "Entry Granted"
-        }
-        else{
-            accessMessage = "Entry Denied"
-        }    
-        this.pushFeedbackMessage(<div>
-                                    <p>&gt;{guess}</p>
-                                    <p>&gt;{accessMessage}</p>
-                                    <p>&gt;Likeness = {numMatches}</p>
-                                </div>);
-    }
-
-    pushFeedbackMessage(message){
-        const messages = this.state.feedbackMessages.slice();
-        messages.push(message);
-        this.setState({
-            feedbackMessages: messages,
-        })
     }
 
     handleMouseEnter(columnIdx, lineIdx, symbolIdx){
@@ -165,7 +140,7 @@ class Game extends React.Component{
     }
 
     handleMouseLeave(){
-        const highlightedSymbols = Array(gameParameters.symbolArrayLength).fill("symbol");
+        const highlightedSymbols = Array(gameParameters.symbolArrayLength).fill("");
         this.setState({
             symbolHighlightState: highlightedSymbols,
             currentSelection: "|",
@@ -188,23 +163,22 @@ class Game extends React.Component{
     }
 
     removeDud(){
-        // Filter out the password
-        let dudWords = [];
+        // Get indices for all words that are not the password
+        let dudIndices = [];
         const words = this.state.words.slice();
-        words.forEach(word =>{
+        words.forEach((_, i) =>{
             if(word._ !== this.state.password){
-                dudWords.push(word);
+                dudIndices.push(i);
             }
         })
 
-        const dud = dudWords[Math.floor(Math.random()*dudWords.length)];
-        const dudIndex = words.indexOf(dud);
+        // Select dud at random
+        const dudIndex = dudIndices[Math.floor(Math.random()*dudIndices.length)];
         words.splice(dudIndex, 1); // remove dud from the list of words that are to be displayed
 
         // Need to replace the symbols of the dud word with blanks
         const dudStartIndex = this.state.words[dudIndex].startIndex;
         const symbolArray = this.state.symbolArray.slice()
-
         for(let i = dudStartIndex; i< dudStartIndex+gameParameters.wordLength; i++){
             symbolArray[i] = '.';
         }
@@ -213,7 +187,14 @@ class Game extends React.Component{
             symbolArray: symbolArray,
             words: words,
         })
+    }
 
+    pushFeedbackMessage(message){
+        const messages = this.state.feedbackMessages.slice();
+        messages.push(message);
+        this.setState({
+            feedbackMessages: messages,
+        })
     }
 
     checkGameWon(numMatches){
@@ -366,7 +347,6 @@ class Game extends React.Component{
                 const correspondingCloseBracket = closeBrackets[openBracket];
                 const remainingSymbolsInLine = this.state.symbolArray.slice(symbolArrayIdx, endOfLineIdx);
                 const closeBracketIdx = remainingSymbolsInLine.indexOf(correspondingCloseBracket);
-                console.log(closeBracketIdx);
                 if(closeBracketIdx !== -1){
                     return {bracketStart: symbolArrayIdx, bracketEnd: (symbolArrayIdx + closeBracketIdx + 1)};                
                 }
@@ -394,6 +374,25 @@ class Game extends React.Component{
                             <p>&gt;{rewardType}</p>
                         </div>)
         this.pushFeedbackMessage(message);
+    }
+
+    checkGuess(guess){
+        const numMatches = this.compareWithPassword(guess);
+        const gameWon = this.checkGameWon(numMatches);
+        this.decreaseTries();
+
+        let accessMessage;
+        if(gameWon){
+           accessMessage = "Entry Granted"
+        }
+        else{
+            accessMessage = "Entry Denied"
+        }    
+        this.pushFeedbackMessage(<div>
+                                    <p>&gt;{guess}</p>
+                                    <p>&gt;{accessMessage}</p>
+                                    <p>&gt;Likeness = {numMatches}</p>
+                                </div>);
     }
 
     compareWithPassword(guess){
