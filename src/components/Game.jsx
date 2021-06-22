@@ -166,7 +166,7 @@ class Game extends React.Component{
         // Get indices for all words that are not the password
         let dudIndices = [];
         const words = this.state.words.slice();
-        words.forEach((_, i) =>{
+        words.forEach((word, i) =>{
             if(word._ !== this.state.password){
                 dudIndices.push(i);
             }
