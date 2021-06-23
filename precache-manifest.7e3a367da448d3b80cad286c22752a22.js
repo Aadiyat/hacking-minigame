@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "e6633cfef3310208aa5d1ea7be0f64d1",
+    "revision": "86d6a8d8ed36ea43576408356576fa59",
     "url": "/hacking-minigame/index.html"
   },
   {
-    "revision": "13e33fec552085a02a08",
+    "revision": "2462c8ed905d1ad6ede7",
     "url": "/hacking-minigame/static/css/main.863b0021.chunk.css"
   },
   {
@@ -16,8 +16,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/hacking-minigame/static/js/2.d020787d.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "13e33fec552085a02a08",
-    "url": "/hacking-minigame/static/js/main.3c23ce3b.chunk.js"
+    "revision": "2462c8ed905d1ad6ede7",
+    "url": "/hacking-minigame/static/js/main.83a72688.chunk.js"
   },
   {
     "revision": "ecaebb323600ce5ac674",
