@@ -1,5 +1,5 @@
 # Fallout Hacking Minigame
-A React web app in the style of the terminal hacking minigame as seen in Fallout 3, Fallout New Negas, Fallout 4 and Fallout 76
+A React web app in the style of the terminal hacking minigame as seen in Fallout 3, Fallout New Vegas, Fallout 4 and Fallout 76
 
 ## Background
 I thought it would be fun challenge to exactly recreate the look and feel of an existing game, since I would have to adhere to existing functional and presentation requirements.
